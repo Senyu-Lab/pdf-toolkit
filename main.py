@@ -1,10 +1,14 @@
 from pathlib import Path
 
+from app.cli import get_confirmation, get_output_filename, get_page_ranges, show_menu
+from app.file_utils import get_pdf_files, get_single_pdf
 from app.merger import merge_pdfs
-from app.splitter import split_pdf,parse_page_ranges
-from app.cli import get_page_number,get_page_ranges, show_menu
-from app.file_utils import get_pdf_files,get_single_pdf
-
+from app.splitter import (
+    get_output_files,
+    get_page_count,
+    split_pdf,
+    validate_page_ranges,
+)
 
 
 # Handle the PDF merge operation.
@@ -15,7 +19,19 @@ def handle_merge(input_dir: Path, output_dir: Path) -> None:
         print("No PDF files found in the input folder.")
         return
 
-    output_file = output_dir / "merged.pdf"
+    output_name = get_output_filename()
+
+    output_file = output_dir / output_name
+    # Ask for confirmation before overwriting an existing file.
+    if output_file.exists():
+        print()
+        print("Output file already exists:")
+        print(f"  {output_file}")
+
+        if not get_confirmation("Overwrite?"):
+            print("Merge cancelled.")
+            return
+
     merge_pdfs(pdf_files, output_file)
 
     print("PDF merge completed!")
@@ -32,6 +48,40 @@ def handle_split(input_dir: Path, output_dir: Path) -> None:
         return
 
     page_ranges = get_page_ranges()
+
+    page_count = get_page_count(input_file)
+
+    try:
+        validate_page_ranges(
+            page_ranges,
+            page_count
+        )
+    except ValueError as e:
+        print(f"Error: {e}")
+        return
+
+    output_files = get_output_files(
+        output_dir,
+        page_ranges
+    )
+
+    existing_files = [
+        output_file
+        for output_file in output_files
+        if output_file.exists()
+    ]
+
+    # Ask for confirmation before overwriting existing files.
+    if existing_files:
+        print()
+        print("Some output files already exist:")
+
+        for output_file in existing_files:
+            print(f"  {output_file.name}")
+
+        if not get_confirmation("Overwrite existing files?"):
+            print("Split cancelled.")
+            return
 
     try:
         output_files = split_pdf(

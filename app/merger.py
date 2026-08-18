@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pymupdf
 
+
 # Merge multiple PDF files into a single PDF.
 def merge_pdfs(
     pdf_files: list[Path],

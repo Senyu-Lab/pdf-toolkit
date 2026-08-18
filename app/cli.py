@@ -1,4 +1,6 @@
+from app.file_utils import is_valid_output_filename
 from app.splitter import parse_page_ranges
+
 
 # Display the main menu.
 def show_menu() -> None:
@@ -30,3 +32,31 @@ def get_page_ranges() -> list[tuple[int, int]]:
         except ValueError as e:
             print(f"Error: {e}")
 
+# Ask the user for a yes or no confirmation.
+def get_confirmation(prompt: str) -> bool:
+    while True:
+        answer = input(f"{prompt} (y/n): ").strip().lower()
+
+        if answer == "y":
+            return True
+        if answer == "n":
+            return False
+        print("Please enter y or n.")
+
+# Get a valid output filename from the user.
+def get_output_filename(default: str = "merged.pdf") -> str:
+    while True:
+        filename = input(
+            f"Output filename (default: {default}): "
+        ).strip()
+
+        if not filename:
+            filename = default
+
+        if not filename.lower().endswith(".pdf"):
+            filename += ".pdf"
+
+        if is_valid_output_filename(filename):
+            return filename
+
+        print("Invalid filename. Please enter a filename only.")

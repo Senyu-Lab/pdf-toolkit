@@ -3,7 +3,12 @@ from pathlib import Path
 import pymupdf
 import pytest
 
-from app.splitter import parse_page_ranges, split_pdf
+from app.splitter import (
+    get_output_files,
+    parse_page_ranges,
+    split_pdf,
+    validate_page_ranges,
+)
 
 
 def test_parse_single_range():
@@ -125,4 +130,37 @@ def test_split_pdf_page_out_of_range(tmp_path: Path):
             input_file,
             output_dir,
             [(8, 12)]
+        )
+
+def test_get_output_files(tmp_path):
+    result = get_output_files(
+        tmp_path,
+        [(2, 5), (8, 10)]
+    )
+
+    assert result == [
+        tmp_path / "pages_2-5.pdf",
+        tmp_path / "pages_8-10.pdf",
+    ]
+
+def test_validate_page_ranges():
+    validate_page_ranges(
+        [(2, 5), (8, 10)],
+        10
+    )
+
+
+
+def test_validate_page_ranges_exceeds_page_count():
+    with pytest.raises(ValueError):
+        validate_page_ranges(
+            [(8, 15)],
+            10
+        )
+
+def test_validate_page_ranges_invalid_start():
+    with pytest.raises(ValueError):
+        validate_page_ranges(
+            [(0, 5)],
+            10
         )

@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pymupdf
 
+
 # Parse and validate page ranges entered by the user.
 def parse_page_ranges(page_range: str) -> list[tuple[int, int]]:
     ranges = page_range.split(",")
@@ -35,6 +36,37 @@ def parse_page_ranges(page_range: str) -> list[tuple[int, int]]:
         result.append((start, end))
 
     return result
+
+# Generate output file paths for the specified page ranges.
+def get_output_files(
+    output_dir: Path,
+    page_ranges: list[tuple[int, int]]
+) -> list[Path]:
+    return [
+        output_dir / f"pages_{start_page}-{end_page}.pdf"
+        for start_page, end_page in page_ranges
+    ]
+
+# Validate page ranges against the PDF page count.
+def validate_page_ranges(
+    page_ranges: list[tuple[int, int]],
+    page_count: int
+) -> None:
+    for start_page, end_page in page_ranges:
+        if start_page < 1 or end_page > page_count:
+            raise ValueError(
+                f"Invalid page range: {start_page}-{end_page}. "
+                f"The PDF contains {page_count} pages."
+            )
+
+# Get the number of pages in a PDF file.
+def get_page_count(input_file: Path) -> int:
+
+    pdf = pymupdf.open(input_file)
+    page_count = len(pdf)
+    pdf.close()
+
+    return page_count
 
 # Split a PDF into multiple files based on page ranges.
 def split_pdf(

@@ -33,7 +33,7 @@ Then choose an option from the menu.
 
 ## Current Version
 
-v0.3.0
+v0.4.0
 
 ## Merge PDFs
 
