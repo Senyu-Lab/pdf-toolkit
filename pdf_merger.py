@@ -1,12 +1,21 @@
+from pathlib import Path
+
 import pymupdf
 
-def merge_pdfs(input_files, output_file):
-    merged_pdf = pymupdf.open()
+# Merge multiple PDF files into a single PDF.
+def merge_pdfs(
+    pdf_files: list[Path],
+    output_file: Path
+) -> None:
 
-    for pdf_file in input_files:
+    output_pdf = pymupdf.open()
+
+    # Add each PDF file to the output PDF.
+    for pdf_file in pdf_files:
         pdf = pymupdf.open(pdf_file)
-        merged_pdf.insert_pdf(pdf)
+        output_pdf.insert_pdf(pdf)
         pdf.close()
 
-    merged_pdf.save(output_file)
-    merged_pdf.close()
+    output_pdf.save(output_file)
+
+    output_pdf.close()

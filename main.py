@@ -17,6 +17,27 @@ def show_menu():
     print("2. Split PDF")
     print("3. Exit")
 
+# Get an integer from user input.
+def get_page_number(prompt: str) -> int:
+    while True:
+        try:
+            return int(input(prompt))
+        except ValueError:
+            print("Please enter a valid number.")
+
+# Get the only PDF file from the input directory.
+def get_single_pdf(input_dir: Path) -> Path | None:
+    pdf_files = get_pdf_files(input_dir)
+
+    if not pdf_files:
+        print("No PDF files found in the input folder.")
+        return None
+
+    if len(pdf_files) > 1:
+        print("Please keep only one PDF in the input folder.")
+        return None
+
+    return pdf_files[0]
 
 def main():
     input_dir = Path("input")
@@ -37,16 +58,26 @@ def main():
                 merge_pdfs(pdf_files, output_file)
                 print("PDF merge completed!")
 
-        elif choice == "2":
-            pdf_files = get_pdf_files(input_dir)
 
-            if not pdf_files:
-                print("No PDF files found in the input folder.")
-            elif len(pdf_files) > 1:
-                print("Please keep only one PDF in the input folder.")
-            else:
-                split_pdf(pdf_files[0], output_dir)
-                print("PDF split completed!")
+
+        elif choice == "2":
+            pdf_file = get_single_pdf(input_dir)
+
+            if pdf_file is not None:
+                start_page = get_page_number("Start page: ")
+                end_page = get_page_number("End page: ")
+                try:
+                    split_pdf(
+                        pdf_file,
+                        output_dir,
+                        start_page,
+                        end_page
+                    )
+                    print("PDF split completed!")
+
+                except ValueError as e:
+                    print(f"Error: {e}")
+
 
         elif choice == "3":
             print("Goodbye!")
