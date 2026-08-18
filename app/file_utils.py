@@ -24,5 +24,7 @@ def is_valid_output_filename(filename: str) -> bool:
 
     return (
         filename != ""
+        and "/" not in filename
+        and "\\" not in filename
         and path.name == filename
     )
