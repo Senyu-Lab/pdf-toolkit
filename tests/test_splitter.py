@@ -54,11 +54,15 @@ def test_split_pdf(tmp_path: Path):
     pdf.save(input_file)
     pdf.close()
 
-    split_pdf(
+    output_files = split_pdf(
         input_file,
         output_dir,
         [(2, 5)]
     )
+
+    assert len(output_files) == 1
+    assert output_files[0].exists()
+
     output_file = output_dir / "pages_2-5.pdf"
     assert output_file.exists()
     result_pdf = pymupdf.open(output_file)
@@ -79,11 +83,14 @@ def test_split_pdf_multiple_ranges(tmp_path: Path):
     pdf.save(input_file)
     pdf.close()
 
-    split_pdf(
+    output_files = split_pdf(
         input_file,
         output_dir,
         [(2, 5), (7, 10)]
     )
+
+    assert len(output_files) == 2
+    assert all(file.exists() for file in output_files)
 
     first_output = output_dir / "pages_2-5.pdf"
     second_output = output_dir / "pages_7-10.pdf"

@@ -41,9 +41,10 @@ def split_pdf(
     input_file: Path,
     output_dir: Path,
     page_ranges: list[tuple[int, int]]
-) -> None:
+) -> list[Path]:
 
     pdf = pymupdf.open(input_file)
+    output_files = []
 
     page_count = len(pdf)
 
@@ -69,5 +70,8 @@ def split_pdf(
         output_pdf.save(output_file)
         output_pdf.close()
 
+        output_files.append(output_file)
+
     pdf.close()
 
+    return output_files

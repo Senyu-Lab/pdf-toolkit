@@ -19,6 +19,9 @@ def handle_merge(input_dir: Path, output_dir: Path) -> None:
     merge_pdfs(pdf_files, output_file)
 
     print("PDF merge completed!")
+    print()
+    print("Output file:")
+    print(f"  {output_file.name}")
 
 # Handle the PDF split operation.
 def handle_split(input_dir: Path, output_dir: Path) -> None:
@@ -31,12 +34,19 @@ def handle_split(input_dir: Path, output_dir: Path) -> None:
     page_ranges = get_page_ranges()
 
     try:
-        split_pdf(
+        output_files = split_pdf(
             input_file,
             output_dir,
             page_ranges
         )
+
         print("PDF split completed!")
+        print()
+        print("Output files:")
+
+        for output_file in output_files:
+            print(f"  {output_file.name}")
+
     except ValueError as e:
         print(f"Error: {e}")
 
@@ -44,6 +54,9 @@ def handle_split(input_dir: Path, output_dir: Path) -> None:
 def main():
     input_dir = Path("input")
     output_dir = Path("output")
+
+    input_dir.mkdir(exist_ok=True)
+    output_dir.mkdir(exist_ok=True)
 
     while True:
         show_menu()
@@ -61,7 +74,7 @@ def main():
             break
 
         else:
-            print("Invalid option.")
+            print("Invalid option. Please choose 1-3.")
 
 
 if __name__ == "__main__":
