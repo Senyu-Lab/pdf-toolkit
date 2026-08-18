@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from pdf_merger import merge_pdfs
-from pdf_splitter import split_pdf
+from pdf_splitter import split_pdf,parse_page_ranges
 
 
 def get_pdf_files(input_dir):
@@ -24,6 +24,15 @@ def get_page_number(prompt: str) -> int:
             return int(input(prompt))
         except ValueError:
             print("Please enter a valid number.")
+
+# Get page ranges from user input.
+def get_page_ranges() -> list[tuple[int, int]]:
+    while True:
+        page_range = input("Page ranges: ")
+        try:
+            return parse_page_ranges(page_range)
+        except ValueError as e:
+            print(f"Error: {e}")
 
 # Get the only PDF file from the input directory.
 def get_single_pdf(input_dir: Path) -> Path | None:
@@ -60,18 +69,18 @@ def main():
 
 
 
+
         elif choice == "2":
             pdf_file = get_single_pdf(input_dir)
 
             if pdf_file is not None:
-                start_page = get_page_number("Start page: ")
-                end_page = get_page_number("End page: ")
+                page_ranges = get_page_ranges()
+
                 try:
                     split_pdf(
                         pdf_file,
                         output_dir,
-                        start_page,
-                        end_page
+                        page_ranges
                     )
                     print("PDF split completed!")
 
