@@ -1,9 +1,8 @@
 from pathlib import Path
 
 import pymupdf
-import pytest
 
-from pdf_merger import merge_pdfs
+from app.merger import merge_pdfs
 
 
 def test_merge_pdfs(tmp_path: Path):

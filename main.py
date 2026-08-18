@@ -1,52 +1,45 @@
 from pathlib import Path
 
-from pdf_merger import merge_pdfs
-from pdf_splitter import split_pdf,parse_page_ranges
+from app.merger import merge_pdfs
+from app.splitter import split_pdf,parse_page_ranges
+from app.cli import get_page_number,get_page_ranges, show_menu
+from app.file_utils import get_pdf_files,get_single_pdf
 
 
-def get_pdf_files(input_dir):
-    return sorted(input_dir.glob("*.pdf"))
 
-
-def show_menu():
-    print("================================")
-    print("          PDF Toolkit")
-    print("================================")
-    print()
-    print("1. Merge PDF")
-    print("2. Split PDF")
-    print("3. Exit")
-
-# Get an integer from user input.
-def get_page_number(prompt: str) -> int:
-    while True:
-        try:
-            return int(input(prompt))
-        except ValueError:
-            print("Please enter a valid number.")
-
-# Get page ranges from user input.
-def get_page_ranges() -> list[tuple[int, int]]:
-    while True:
-        page_range = input("Page ranges: ")
-        try:
-            return parse_page_ranges(page_range)
-        except ValueError as e:
-            print(f"Error: {e}")
-
-# Get the only PDF file from the input directory.
-def get_single_pdf(input_dir: Path) -> Path | None:
+# Handle the PDF merge operation.
+def handle_merge(input_dir: Path, output_dir: Path) -> None:
     pdf_files = get_pdf_files(input_dir)
 
     if not pdf_files:
         print("No PDF files found in the input folder.")
-        return None
+        return
 
-    if len(pdf_files) > 1:
-        print("Please keep only one PDF in the input folder.")
-        return None
+    output_file = output_dir / "merged.pdf"
+    merge_pdfs(pdf_files, output_file)
 
-    return pdf_files[0]
+    print("PDF merge completed!")
+
+# Handle the PDF split operation.
+def handle_split(input_dir: Path, output_dir: Path) -> None:
+    input_file = get_single_pdf(input_dir)
+
+    if input_file is None:
+        print("Please keep exactly one PDF in the input folder.")
+        return
+
+    page_ranges = get_page_ranges()
+
+    try:
+        split_pdf(
+            input_file,
+            output_dir,
+            page_ranges
+        )
+        print("PDF split completed!")
+    except ValueError as e:
+        print(f"Error: {e}")
+
 
 def main():
     input_dir = Path("input")
@@ -58,35 +51,10 @@ def main():
         choice = input("Choose an option: ")
 
         if choice == "1":
-            pdf_files = get_pdf_files(input_dir)
-
-            if not pdf_files:
-                print("No PDF files found in the input folder.")
-            else:
-                output_file = output_dir / "merged.pdf"
-                merge_pdfs(pdf_files, output_file)
-                print("PDF merge completed!")
-
-
-
+            handle_merge(input_dir, output_dir)
 
         elif choice == "2":
-            pdf_file = get_single_pdf(input_dir)
-
-            if pdf_file is not None:
-                page_ranges = get_page_ranges()
-
-                try:
-                    split_pdf(
-                        pdf_file,
-                        output_dir,
-                        page_ranges
-                    )
-                    print("PDF split completed!")
-
-                except ValueError as e:
-                    print(f"Error: {e}")
-
+            handle_split(input_dir, output_dir)
 
         elif choice == "3":
             print("Goodbye!")

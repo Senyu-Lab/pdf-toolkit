@@ -3,7 +3,7 @@ from pathlib import Path
 import pymupdf
 import pytest
 
-from pdf_splitter import parse_page_ranges, split_pdf
+from app.splitter import parse_page_ranges, split_pdf
 
 
 def test_parse_single_range():
