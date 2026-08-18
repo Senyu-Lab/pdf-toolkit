@@ -1,4 +1,5 @@
 # PDF Toolkit
+[![CI](https://github.com/Senyu-Lab/pdf-toolkit/actions/workflows/ci.yml/badge.svg)](https://github.com/Senyu-Lab/pdf-toolkit/actions/workflows/ci.yml)
 
 A simple Python command-line tool for merging and splitting PDF files.
 
