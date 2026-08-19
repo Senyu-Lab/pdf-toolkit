@@ -230,3 +230,38 @@ def test_delete_file_failure(qtbot, tmp_path, monkeypatch):
 
     assert len(messages) == 1
     assert messages[0][1] == "Delete failed"
+
+def test_add_dropped_pdf_file(qtbot, tmp_path):
+    widget = DeleteWidget()
+    qtbot.addWidget(widget)
+
+    pdf_file = tmp_path / "test.pdf"
+
+    widget.add_dropped_file(pdf_file)
+
+    assert widget.input_file == pdf_file
+    assert widget.input_label.text() == "PDF: test.pdf"
+
+
+def test_add_dropped_non_pdf_file(qtbot, tmp_path):
+    widget = DeleteWidget()
+    qtbot.addWidget(widget)
+
+    txt_file = tmp_path / "test.txt"
+
+    widget.add_dropped_file(txt_file)
+
+    assert widget.input_file is None
+    assert widget.input_label.text() == "PDF: Not selected"
+
+
+def test_add_dropped_uppercase_pdf_file(qtbot, tmp_path):
+    widget = DeleteWidget()
+    qtbot.addWidget(widget)
+
+    pdf_file = tmp_path / "test.PDF"
+
+    widget.add_dropped_file(pdf_file)
+
+    assert widget.input_file == pdf_file
+    assert widget.input_label.text() == "PDF: test.PDF"

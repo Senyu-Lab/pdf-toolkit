@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pymupdf
+from PySide6.QtCore import QUrl
 from PySide6.QtWidgets import QFileDialog, QMessageBox
 
 from gui.merge_widget import MergeWidget
@@ -252,3 +253,64 @@ def test_merge_files_failure(qtbot, tmp_path, monkeypatch):
 
     assert len(messages) == 1
     assert "Merge failed" in messages[0][2]
+
+def test_add_dropped_pdf_files(qtbot, tmp_path):
+    widget = MergeWidget()
+    qtbot.addWidget(widget)
+
+    pdf1 = tmp_path / "test1.pdf"
+    pdf2 = tmp_path / "test2.pdf"
+
+    urls = [
+        QUrl.fromLocalFile(str(pdf1)),
+        QUrl.fromLocalFile(str(pdf2)),
+    ]
+
+    widget.add_dropped_files(urls)
+
+    assert widget.pdf_files == [pdf1, pdf2]
+    assert widget.file_list.count() == 2
+    assert widget.file_list.item(0).text() == "test1.pdf"
+    assert widget.file_list.item(1).text() == "test2.pdf"
+
+
+def test_add_dropped_non_pdf_files(qtbot, tmp_path):
+    widget = MergeWidget()
+    qtbot.addWidget(widget)
+
+    txt_file = tmp_path / "test.txt"
+    png_file = tmp_path / "test.png"
+
+    urls = [
+        QUrl.fromLocalFile(str(txt_file)),
+        QUrl.fromLocalFile(str(png_file)),
+    ]
+
+    widget.add_dropped_files(urls)
+
+    assert widget.pdf_files == []
+    assert widget.file_list.count() == 0
+
+
+def test_add_dropped_mixed_files(qtbot, tmp_path):
+    widget = MergeWidget()
+    qtbot.addWidget(widget)
+
+    pdf1 = tmp_path / "test1.pdf"
+    txt_file = tmp_path / "test.txt"
+    pdf2 = tmp_path / "test2.PDF"
+    png_file = tmp_path / "test.png"
+
+    urls = [
+        QUrl.fromLocalFile(str(pdf1)),
+        QUrl.fromLocalFile(str(txt_file)),
+        QUrl.fromLocalFile(str(pdf2)),
+        QUrl.fromLocalFile(str(png_file)),
+    ]
+
+    widget.add_dropped_files(urls)
+
+    assert widget.pdf_files == [pdf1, pdf2]
+    assert widget.file_list.count() == 2
+    assert widget.file_list.item(0).text() == "test1.pdf"
+    assert widget.file_list.item(1).text() == "test2.PDF"

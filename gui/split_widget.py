@@ -1,5 +1,7 @@
 from pathlib import Path
 
+from PySide6.QtCore import QMimeData, QUrl
+from PySide6.QtGui import QDragEnterEvent, QDropEvent
 from PySide6.QtWidgets import (
     QFileDialog,
     QHBoxLayout,
@@ -25,17 +27,99 @@ class SplitWidget(QWidget):
         self.input_file: Path | None = None
         self.output_dir: Path | None = None
 
+        self.setAcceptDrops(True)
+
         self.setup_ui()
+
+    def set_input_file(self, path: Path):
+        # Keep the selected PDF path and displayed filename synchronized.
+        self.input_file = path
+        self.input_label.setText(f"PDF: {path.name}")
+
+    def add_dropped_file(self, path: Path):
+        # Split only accepts PDF files as input.
+        if path.suffix.lower() != ".pdf":
+            return
+
+        self.set_input_file(path)
+
+    def dragEnterEvent(self, event: QDragEnterEvent):
+        if not event.mimeData().hasUrls():
+            event.ignore()
+            return
+
+        has_pdf = any(
+            url.isLocalFile()
+            and Path(url.toLocalFile()).suffix.lower() == ".pdf"
+            for url in event.mimeData().urls()
+        )
+
+        if has_pdf:
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
+    def dragMoveEvent(self, event):
+        if not event.mimeData().hasUrls():
+            event.ignore()
+            return
+
+        has_pdf = any(
+            url.isLocalFile()
+            and Path(url.toLocalFile()).suffix.lower() == ".pdf"
+            for url in event.mimeData().urls()
+        )
+
+        if has_pdf:
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
+    def dropEvent(self, event: QDropEvent):
+        if not event.mimeData().hasUrls():
+            event.ignore()
+            return
+
+        for url in event.mimeData().urls():
+            if not url.isLocalFile():
+                continue
+
+            path = Path(url.toLocalFile())
+
+            if path.suffix.lower() != ".pdf":
+                continue
+
+            self.add_dropped_file(path)
+
+            # Split only needs one input PDF.
+            break
+
+        event.acceptProposedAction()
+
+
 
     def setup_ui(self):
         layout = QVBoxLayout()
+        layout.setContentsMargins(30, 30, 30, 30)
+        layout.setSpacing(15)
 
         title = QLabel("Split PDF")
+        title.setObjectName("pageTitle")
         layout.addWidget(title)
+
+        description = QLabel(
+            "Select a PDF, enter page ranges, and split it into separate files."
+        )
+        layout.addWidget(description)
+
+        section_title = QLabel("Input PDF")
+        section_title.setObjectName("sectionTitle")
+        layout.addWidget(section_title)
 
         input_layout = QHBoxLayout()
 
         self.input_label = QLabel("PDF: Not selected")
+        self.input_label.setObjectName("outputLabel")
         input_layout.addWidget(self.input_label)
 
         input_button = QPushButton("Choose PDF")
@@ -44,20 +128,24 @@ class SplitWidget(QWidget):
 
         layout.addLayout(input_layout)
 
-        range_layout = QHBoxLayout()
-
-        range_label = QLabel("Page ranges:")
-        range_layout.addWidget(range_label)
+        range_title = QLabel("Page Ranges")
+        range_title.setObjectName("sectionTitle")
+        layout.addWidget(range_title)
 
         self.range_input = QLineEdit()
-        self.range_input.setPlaceholderText("Example: 1-3,5-7")
-        range_layout.addWidget(self.range_input)
+        self.range_input.setPlaceholderText(
+            "Example: 1-3, 5-7"
+        )
+        layout.addWidget(self.range_input)
 
-        layout.addLayout(range_layout)
+        output_title = QLabel("Output Folder")
+        output_title.setObjectName("sectionTitle")
+        layout.addWidget(output_title)
 
         output_layout = QHBoxLayout()
 
         self.output_label = QLabel("Output: Not selected")
+        self.output_label.setObjectName("outputLabel")
         output_layout.addWidget(self.output_label)
 
         output_button = QPushButton("Choose Output Folder")
@@ -67,10 +155,15 @@ class SplitWidget(QWidget):
         layout.addLayout(output_layout)
 
         split_button = QPushButton("Split PDF")
+        split_button.setObjectName("primaryButton")
         split_button.clicked.connect(self.split_file)
         layout.addWidget(split_button)
 
+        layout.addStretch()
+
         self.setLayout(layout)
+
+
 
     def choose_pdf(self):
         file, _ = QFileDialog.getOpenFileName(
@@ -83,8 +176,7 @@ class SplitWidget(QWidget):
         if not file:
             return
 
-        self.input_file = Path(file)
-        self.input_label.setText(f"PDF: {self.input_file.name}")
+        self.set_input_file(Path(file))
 
     def choose_output(self):
         directory = QFileDialog.getExistingDirectory(
@@ -96,7 +188,9 @@ class SplitWidget(QWidget):
             return
 
         self.output_dir = Path(directory)
-        self.output_label.setText(f"Output: {self.output_dir}")
+        self.output_label.setText(
+            f"Output: {self.output_dir}"
+        )
 
     def split_file(self):
         if self.input_file is None:
@@ -126,17 +220,22 @@ class SplitWidget(QWidget):
             return
 
         try:
-            page_ranges = self.parse_page_ranges(page_range_text)
+            # Convert the user's page range input into page range tuples.
+            page_ranges = self.parse_page_ranges(
+                page_range_text
+            )
 
-            page_count = get_page_count(self.input_file)
+            page_count = get_page_count(
+                self.input_file
+            )
 
-            # Validate the user-provided ranges before modifying the PDF.
+            # Validate the requested ranges before modifying the PDF.
             validate_page_ranges(
                 page_ranges,
                 page_count,
             )
 
-            # Reuse the existing split implementation from the app layer.
+            # Reuse the existing PDF splitting logic.
             output_files = split_pdf(
                 self.input_file,
                 self.output_dir,
@@ -166,11 +265,12 @@ class SplitWidget(QWidget):
         )
 
     @staticmethod
-    def parse_page_ranges(text: str) -> list[tuple[int, int]]:
+    def parse_page_ranges(
+        text: str,
+    ) -> list[tuple[int, int]]:
         ranges = []
 
-        # Convert user input such as "1-3,5,7-9" into
-        # [(1, 3), (5, 5), (7, 9)] for the core split logic.
+        # Convert inputs such as "1-3, 5, 7-9" into page range tuples.
         for part in text.split(","):
             part = part.strip()
 
@@ -179,6 +279,7 @@ class SplitWidget(QWidget):
 
             if "-" in part:
                 start, end = part.split("-", 1)
+
                 start_page = int(start.strip())
                 end_page = int(end.strip())
             else:
@@ -188,6 +289,8 @@ class SplitWidget(QWidget):
             ranges.append((start_page, end_page))
 
         if not ranges:
-            raise ValueError("No valid page ranges were entered.")
+            raise ValueError(
+                "No valid page ranges were entered."
+            )
 
         return ranges
