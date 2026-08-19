@@ -11,15 +11,14 @@ A simple Python tool for merging, splitting, and editing PDF files.
 * Delete specific pages or page ranges from a PDF
 * Support multiple page ranges
 * Validate user input and page ranges
-* Prevent deleting all pages from a PDF
-* Confirm before overwriting existing files
-* Automated tests with pytest
-* Code quality checks with Ruff
+* Command-line interface (CLI)
+* Graphical user interface (GUI) built with PySide6
 
 ## Requirements
 
 * Python 3.10+
 * PyMuPDF
+* PySide6
 * pytest
 * Ruff
 
@@ -33,6 +32,10 @@ pip install -r requirements.txt
 
 ## Usage
 
+PDF Toolkit provides both a command-line interface and a graphical user interface.
+
+### CLI
+
 Put PDF files into the `input` folder.
 
 Run:
@@ -43,9 +46,23 @@ python main.py
 
 Then choose an option from the menu.
 
+### GUI
+
+Run:
+
+```bash
+python gui_main.py
+```
+
+The GUI currently provides the following operations:
+
+* Merge PDF
+* Split PDF
+* Delete PDF pages
+
 ## Current Version
 
-v0.5.0
+v1.0.0
 
 ## Merge PDFs
 
@@ -132,7 +149,7 @@ Run all tests with:
 pytest
 ```
 
-The project includes automated tests covering PDF merging, splitting, page deletion, input validation, and CLI behavior.
+The project includes automated tests covering PDF merging, splitting, page deletion, input validation, CLI behavior, and GUI functionality.
 
 ## Code Quality
 
