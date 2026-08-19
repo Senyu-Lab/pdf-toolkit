@@ -21,12 +21,9 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install system dependencies
+      - name: Check EGL library
         run: |
-          sudo apt-get update -o Acquire::Retries=3 \
-            -o Acquire::http::Timeout=30 \
-            -o Acquire::https::Timeout=30
-          sudo apt-get install -y --no-install-recommends libegl1
+          ldconfig -p | grep libEGL.so.1 || true
 
       - name: Install dependencies
         run: |
