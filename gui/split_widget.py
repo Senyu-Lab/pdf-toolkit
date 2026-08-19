@@ -1,6 +1,5 @@
 from pathlib import Path
 
-from PySide6.QtCore import QMimeData, QUrl
 from PySide6.QtGui import QDragEnterEvent, QDropEvent
 from PySide6.QtWidgets import (
     QFileDialog,
