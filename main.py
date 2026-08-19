@@ -3,13 +3,13 @@ from pathlib import Path
 from app.cli import get_confirmation, get_output_filename, get_page_ranges, show_menu
 from app.file_utils import get_pdf_files, get_single_pdf
 from app.merger import merge_pdfs
+from app.page_manager import delete_pages
 from app.splitter import (
     get_output_files,
     get_page_count,
     split_pdf,
     validate_page_ranges,
 )
-from app.page_manager import delete_pages
 
 
 # Handle the PDF merge operation.
