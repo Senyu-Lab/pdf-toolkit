@@ -23,8 +23,10 @@ jobs:
 
       - name: Install system dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libegl1
+          sudo apt-get update -o Acquire::Retries=3 \
+            -o Acquire::http::Timeout=30 \
+            -o Acquire::https::Timeout=30
+          sudo apt-get install -y --no-install-recommends libegl1
 
       - name: Install dependencies
         run: |
