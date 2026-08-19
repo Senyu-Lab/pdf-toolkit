@@ -9,6 +9,7 @@ from app.splitter import (
     split_pdf,
     validate_page_ranges,
 )
+from app.page_manager import delete_pages
 
 
 # Handle the PDF merge operation.
@@ -100,6 +101,52 @@ def handle_split(input_dir: Path, output_dir: Path) -> None:
     except ValueError as e:
         print(f"Error: {e}")
 
+# Handle the PDF page deletion operation.
+def handle_delete_pages(input_dir: Path, output_dir: Path) -> None:
+    input_file = get_single_pdf(input_dir)
+
+    if input_file is None:
+        print("Please keep exactly one PDF in the input folder.")
+        return
+
+    page_ranges = get_page_ranges()
+
+    page_count = get_page_count(input_file)
+
+    try:
+        validate_page_ranges(
+            page_ranges,
+            page_count
+        )
+    except ValueError as e:
+        print(f"Error: {e}")
+        return
+
+    output_file = output_dir / "modified.pdf"
+
+    if output_file.exists():
+        print()
+        print("Output file already exists:")
+        print(f"  {output_file}")
+
+        if not get_confirmation("Overwrite?"):
+            print("Delete pages cancelled.")
+            return
+
+    try:
+        delete_pages(
+            input_file,
+            output_file,
+            page_ranges
+        )
+
+        print("Pages deleted successfully!")
+        print()
+        print("Output file:")
+        print(f"  {output_file.name}")
+
+    except ValueError as e:
+        print(f"Error: {e}")
 
 def main():
     input_dir = Path("input")
@@ -115,16 +162,16 @@ def main():
 
         if choice == "1":
             handle_merge(input_dir, output_dir)
-
         elif choice == "2":
             handle_split(input_dir, output_dir)
-
         elif choice == "3":
+            handle_delete_pages(input_dir, output_dir)
+        elif choice == "4":
             print("Goodbye!")
             break
 
         else:
-            print("Invalid option. Please choose 1-3.")
+            print("Invalid option. Please choose 1-4.")
 
 
 if __name__ == "__main__":

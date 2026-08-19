@@ -11,7 +11,8 @@ def show_menu() -> None:
     print()
     print("1. Merge PDFs")
     print("2. Split PDF")
-    print("3. Exit")
+    print("3. Delete Pages")
+    print("4. Exit")
     print()
 
 # Get an integer from user input.

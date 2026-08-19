@@ -1,19 +1,20 @@
 # PDF Toolkit
+
 [![CI](https://github.com/Senyu-Lab/pdf-toolkit/actions/workflows/ci.yml/badge.svg)](https://github.com/Senyu-Lab/pdf-toolkit/actions/workflows/ci.yml)
 
-A simple Python command-line tool for merging and splitting PDF files.
+A simple Python tool for merging, splitting, and editing PDF files.
 
 ## Features
 
 * Merge multiple PDF files into one PDF
 * Split a PDF by page ranges
+* Delete specific pages or page ranges from a PDF
 * Support multiple page ranges
 * Validate user input and page ranges
-* Validate output filenames
-* Handle existing output files safely
+* Prevent deleting all pages from a PDF
+* Confirm before overwriting existing files
 * Automated tests with pytest
 * Code quality checks with Ruff
-* Continuous Integration with GitHub Actions
 
 ## Requirements
 
@@ -32,9 +33,9 @@ pip install -r requirements.txt
 
 ## Usage
 
-Place PDF files into the `input` folder.
+Put PDF files into the `input` folder.
 
-Run the program:
+Run:
 
 ```bash
 python main.py
@@ -42,7 +43,11 @@ python main.py
 
 Then choose an option from the menu.
 
-### Merge PDFs
+## Current Version
+
+v0.5.0
+
+## Merge PDFs
 
 Select:
 
@@ -50,13 +55,15 @@ Select:
 1. Merge PDFs
 ```
 
-All PDF files in the `input` directory will be merged into:
+The PDF files in the input directory will be merged into the specified output file.
+
+For example:
 
 ```text
 output/merged.pdf
 ```
 
-### Split PDF
+## Split PDF
 
 Select:
 
@@ -64,25 +71,58 @@ Select:
 2. Split PDF
 ```
 
-Enter one or more page ranges.
-
-For example:
+Enter the page ranges:
 
 ```text
-2-5,8-10
+2-5, 8-10
 ```
 
-The program will generate separate PDF files:
+The program will generate:
 
 ```text
 output/
-├── pages_2-5.pdf
-└── pages_8-10.pdf
+  pages_2-5.pdf
+  pages_8-10.pdf
 ```
 
-Multiple page ranges are supported.
+## Delete Pages
 
+Select:
 
+```text
+3. Delete Pages
+```
+
+Enter the pages or page ranges to delete:
+
+```text
+2, 5-7, 10
+```
+
+The specified pages will be removed from the PDF.
+
+For example, if the input PDF contains 10 pages and you enter:
+
+```text
+2, 5-7, 10
+```
+
+the program will keep pages:
+
+```text
+1, 3-4, 8-9
+```
+
+and generate:
+
+```text
+output/
+  modified.pdf
+```
+
+The program validates the page ranges and prevents deleting all pages from the PDF.
+
+If the output file already exists, the program will ask for confirmation before overwriting it.
 
 ## Testing
 
@@ -92,36 +132,19 @@ Run all tests with:
 pytest
 ```
 
-The project currently includes automated tests for the CLI, file utilities, PDF merging, and PDF splitting.
+The project includes automated tests covering PDF merging, splitting, page deletion, input validation, and CLI behavior.
 
 ## Code Quality
 
-Ruff is used for code quality and import checking.
-
-Run Ruff with:
+Run Ruff to check the code:
 
 ```bash
 ruff check .
 ```
 
-Ruff can automatically fix supported issues with:
-
-```bash
-ruff check . --fix
-```
-
 ## Continuous Integration
 
-GitHub Actions automatically runs the test suite and Ruff checks when changes are pushed to the `main` branch or when a pull request is opened.
-
-The CI workflow verifies that:
-
-* All tests pass
-* Ruff checks pass
-
-## Current Version
-
-v0.4.0
+GitHub Actions automatically runs the test suite and code quality checks when changes are pushed to the repository.
 
 ## License
 
