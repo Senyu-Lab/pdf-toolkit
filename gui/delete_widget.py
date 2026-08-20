@@ -17,64 +17,73 @@ from app.splitter import (
     get_page_count,
     validate_page_ranges,
 )
+from gui.i18n import LanguageManager
 
 
 class DeleteWidget(QWidget):
-    def __init__(self):
+    def __init__(
+        self,
+        language_manager: LanguageManager | None = None,
+    ):
         super().__init__()
+
+        # Use the shared language manager or English for standalone tests.
+        self.language = language_manager or LanguageManager("en")
 
         self.input_file: Path | None = None
         self.output_file: Path | None = None
 
+        # Allow PDF files to be dragged into the widget.
         self.setAcceptDrops(True)
 
         self.setup_ui()
 
     def add_dropped_file(self, path: Path):
-        # Delete only accepts PDF files as input.
+        """Accept only PDF files as delete input."""
+
         if path.suffix.lower() != ".pdf":
             return
 
         self.set_input_file(path)
 
     def set_input_file(self, path: Path):
-        # Keep the selected PDF path and displayed filename synchronized.
+        """Set the input PDF and update the displayed filename."""
+
         self.input_file = path
-        self.input_label.setText(f"PDF: {path.name}")
+        self.input_label.setText(
+            f"{self.language.get('delete.input_prefix')}: "
+            f"{path.name}"
+        )
 
-    def dragEnterEvent(self, event: QDragEnterEvent):
+    def _has_pdf_files(self, event) -> bool:
+        """Return whether the drag contains at least one PDF."""
+
         if not event.mimeData().hasUrls():
-            event.ignore()
-            return
+            return False
 
-        has_pdf = any(
+        return any(
             url.isLocalFile()
             and Path(url.toLocalFile()).suffix.lower() == ".pdf"
             for url in event.mimeData().urls()
         )
 
-        if has_pdf:
+    def dragEnterEvent(self, event: QDragEnterEvent):
+        # Only accept external drops containing PDF files.
+        if self._has_pdf_files(event):
             event.acceptProposedAction()
         else:
             event.ignore()
 
     def dragMoveEvent(self, event):
-        if not event.mimeData().hasUrls():
-            event.ignore()
-            return
-
-        has_pdf = any(
-            url.isLocalFile()
-            and Path(url.toLocalFile()).suffix.lower() == ".pdf"
-            for url in event.mimeData().urls()
-        )
-
-        if has_pdf:
+        # Only allow PDF files to be dragged over the widget.
+        if self._has_pdf_files(event):
             event.acceptProposedAction()
         else:
             event.ignore()
 
     def dropEvent(self, event: QDropEvent):
+        """Use the first dropped PDF as the input file."""
+
         if not event.mimeData().hasUrls():
             event.ignore()
             return
@@ -100,69 +109,92 @@ class DeleteWidget(QWidget):
         layout.setContentsMargins(30, 30, 30, 30)
         layout.setSpacing(15)
 
-        title = QLabel("Delete Pages")
-        title.setObjectName("pageTitle")
-        layout.addWidget(title)
-
-        description = QLabel(
-            "Select a PDF and specify the pages or page ranges to delete."
+        self.title_label = QLabel(
+            self.language.get("delete.title")
         )
-        layout.addWidget(description)
+        self.title_label.setObjectName("pageTitle")
+        layout.addWidget(self.title_label)
 
-        input_title = QLabel("Input PDF")
-        input_title.setObjectName("sectionTitle")
-        layout.addWidget(input_title)
+        self.description_label = QLabel(
+            self.language.get("delete.description")
+        )
+        layout.addWidget(self.description_label)
+
+        self.input_title = QLabel(
+            self.language.get("delete.input_pdf")
+        )
+        self.input_title.setObjectName("sectionTitle")
+        layout.addWidget(self.input_title)
 
         input_layout = QHBoxLayout()
 
-        self.input_label = QLabel("PDF: Not selected")
+        self.input_label = QLabel(
+            f"{self.language.get('delete.input_prefix')}: "
+            f"{self.language.get('common.not_selected')}"
+        )
         self.input_label.setObjectName("outputLabel")
         input_layout.addWidget(self.input_label)
 
-        input_button = QPushButton("Choose PDF")
-        input_button.clicked.connect(self.choose_pdf)
-        input_layout.addWidget(input_button)
+        self.input_button = QPushButton(
+            self.language.get("delete.choose_pdf")
+        )
+        self.input_button.clicked.connect(self.choose_pdf)
+        input_layout.addWidget(self.input_button)
 
         layout.addLayout(input_layout)
 
-        pages_title = QLabel("Pages to Delete")
-        pages_title.setObjectName("sectionTitle")
-        layout.addWidget(pages_title)
+        self.pages_title = QLabel(
+            self.language.get("delete.pages_to_delete")
+        )
+        self.pages_title.setObjectName("sectionTitle")
+        layout.addWidget(self.pages_title)
 
         self.range_input = QLineEdit()
-        self.range_input.setPlaceholderText("Example: 2, 5-7, 10")
-
+        self.range_input.setPlaceholderText(
+            self.language.get("delete.range_placeholder")
+        )
         layout.addWidget(self.range_input)
 
-        output_title = QLabel("Output")
-        output_title.setObjectName("sectionTitle")
-        layout.addWidget(output_title)
+        self.output_title = QLabel(
+            self.language.get("delete.output")
+        )
+        self.output_title.setObjectName("sectionTitle")
+        layout.addWidget(self.output_title)
 
         output_layout = QHBoxLayout()
 
-        self.output_label = QLabel("Output: Not selected")
+        self.output_label = QLabel(
+            f"{self.language.get('delete.output_prefix')}: "
+            f"{self.language.get('common.not_selected')}"
+        )
         self.output_label.setObjectName("outputLabel")
         output_layout.addWidget(self.output_label)
 
-        output_button = QPushButton("Choose Output")
-        output_button.clicked.connect(self.choose_output)
-        output_layout.addWidget(output_button)
+        self.output_button = QPushButton(
+            self.language.get("delete.choose_output")
+        )
+        self.output_button.clicked.connect(self.choose_output)
+        output_layout.addWidget(self.output_button)
 
         layout.addLayout(output_layout)
 
-        delete_button = QPushButton("Delete Pages")
-        delete_button.setObjectName("dangerButton")
-        delete_button.clicked.connect(self.delete_file)
-        layout.addWidget(delete_button)
+        self.delete_button = QPushButton(
+            self.language.get("delete.delete_pages")
+        )
+        self.delete_button.setObjectName("dangerButton")
+        self.delete_button.clicked.connect(self.delete_file)
+        layout.addWidget(self.delete_button)
 
         layout.addStretch()
 
         self.setLayout(layout)
 
     def choose_pdf(self):
+        """Select the input PDF through a file dialog."""
+
         file, _ = QFileDialog.getOpenFileName(
             self,
-            "Select PDF file",
+            self.language.get("delete.choose_pdf"),
             "",
             "PDF Files (*.pdf)",
         )
@@ -173,9 +205,11 @@ class DeleteWidget(QWidget):
         self.set_input_file(Path(file))
 
     def choose_output(self):
+        """Select the output PDF file."""
+
         file, _ = QFileDialog.getSaveFileName(
             self,
-            "Save modified PDF",
+            self.language.get("delete.choose_output"),
             "",
             "PDF Files (*.pdf)",
         )
@@ -184,16 +218,20 @@ class DeleteWidget(QWidget):
             return
 
         self.output_file = Path(file)
+
         self.output_label.setText(
-            f"Output: {self.output_file}"
+            f"{self.language.get('delete.output_prefix')}: "
+            f"{self.output_file}"
         )
 
     def delete_file(self):
+        """Validate input and delete the selected pages."""
+
         if self.input_file is None:
             QMessageBox.warning(
                 self,
-                "PDF not selected",
-                "Please choose a PDF file.",
+                self.language.get("delete.input_not_selected"),
+                self.language.get("delete.choose_pdf_message"),
             )
             return
 
@@ -202,16 +240,16 @@ class DeleteWidget(QWidget):
         if not page_range_text:
             QMessageBox.warning(
                 self,
-                "Pages not entered",
-                "Please enter pages or page ranges to delete.",
+                self.language.get("delete.pages_not_entered"),
+                self.language.get("delete.enter_pages_message"),
             )
             return
 
         if self.output_file is None:
             QMessageBox.warning(
                 self,
-                "Output not selected",
-                "Please choose an output file.",
+                self.language.get("delete.output_not_selected"),
+                self.language.get("delete.choose_output_message"),
             )
             return
 
@@ -225,7 +263,7 @@ class DeleteWidget(QWidget):
                 self.input_file
             )
 
-            # Validate the ranges before deleting any pages.
+            # Validate ranges before modifying the PDF.
             validate_page_ranges(
                 page_ranges,
                 page_count,
@@ -241,7 +279,7 @@ class DeleteWidget(QWidget):
         except ValueError as exc:
             QMessageBox.warning(
                 self,
-                "Invalid input",
+                self.language.get("delete.invalid_input"),
                 str(exc),
             )
             return
@@ -249,24 +287,26 @@ class DeleteWidget(QWidget):
         except Exception as exc:
             QMessageBox.critical(
                 self,
-                "Delete failed",
+                self.language.get("delete.failed"),
                 str(exc),
             )
             return
 
         QMessageBox.information(
             self,
-            "Success",
-            "Pages deleted successfully.",
+            self.language.get("common.success"),
+            self.language.get("delete.success"),
         )
 
     @staticmethod
     def parse_page_ranges(
         text: str,
     ) -> list[tuple[int, int]]:
+        """Convert page range text into page range tuples."""
+
         ranges = []
 
-        # Convert inputs such as "2, 5-7, 10" into page range tuples.
+        # Convert inputs such as "2, 5-7, 10".
         for part in text.split(","):
             part = part.strip()
 
@@ -290,3 +330,64 @@ class DeleteWidget(QWidget):
             )
 
         return ranges
+
+    def refresh_ui(self):
+        """Refresh all visible text using the current language."""
+
+        self.title_label.setText(
+            self.language.get("delete.title")
+        )
+
+        self.description_label.setText(
+            self.language.get("delete.description")
+        )
+
+        self.input_title.setText(
+            self.language.get("delete.input_pdf")
+        )
+
+        self.input_button.setText(
+            self.language.get("delete.choose_pdf")
+        )
+
+        self.pages_title.setText(
+            self.language.get("delete.pages_to_delete")
+        )
+
+        self.range_input.setPlaceholderText(
+            self.language.get("delete.range_placeholder")
+        )
+
+        self.output_title.setText(
+            self.language.get("delete.output")
+        )
+
+        self.output_button.setText(
+            self.language.get("delete.choose_output")
+        )
+
+        self.delete_button.setText(
+            self.language.get("delete.delete_pages")
+        )
+
+        if self.input_file is None:
+            self.input_label.setText(
+                f"{self.language.get('delete.input_prefix')}: "
+                f"{self.language.get('common.not_selected')}"
+            )
+        else:
+            self.input_label.setText(
+                f"{self.language.get('delete.input_prefix')}: "
+                f"{self.input_file.name}"
+            )
+
+        if self.output_file is None:
+            self.output_label.setText(
+                f"{self.language.get('delete.output_prefix')}: "
+                f"{self.language.get('common.not_selected')}"
+            )
+        else:
+            self.output_label.setText(
+                f"{self.language.get('delete.output_prefix')}: "
+                f"{self.output_file}"
+            )

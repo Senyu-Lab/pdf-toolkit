@@ -15,22 +15,35 @@ from PySide6.QtWidgets import (
 )
 
 from app.merger import merge_pdfs
+from gui.i18n import LanguageManager
 
 
 class PdfListWidget(QListWidget):
-    """PDF list that supports external file drops and internal reordering."""
+    """PDF list that supports external drops and internal reordering."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        # Allow files to be dragged from the file manager into the list.
+        # Allow files to be dragged into the list.
         self.setAcceptDrops(True)
 
-        # Allow items inside the list to be dragged to change their order.
+        # Allow items to be reordered by dragging.
         self.setDragEnabled(True)
         self.setDragDropMode(QListWidget.DragDropMode.InternalMove)
         self.setDefaultDropAction(Qt.DropAction.MoveAction)
         self.setDropIndicatorShown(True)
+
+    def _has_pdf_files(self, event) -> bool:
+        """Return whether the drag contains at least one PDF file."""
+
+        if not event.mimeData().hasUrls():
+            return False
+
+        return any(
+            url.isLocalFile()
+            and Path(url.toLocalFile()).suffix.lower() == ".pdf"
+            for url in event.mimeData().urls()
+        )
 
     def dragEnterEvent(self, event: QDragEnterEvent):
         # Internal dragging is always allowed for reordering.
@@ -38,17 +51,9 @@ class PdfListWidget(QListWidget):
             event.acceptProposedAction()
             return
 
-        # External files are accepted only when at least one PDF is included.
-        if event.mimeData().hasUrls():
-            has_pdf = any(
-                url.isLocalFile()
-                and Path(url.toLocalFile()).suffix.lower() == ".pdf"
-                for url in event.mimeData().urls()
-            )
-
-            if has_pdf:
-                event.acceptProposedAction()
-                return
+        if self._has_pdf_files(event):
+            event.acceptProposedAction()
+            return
 
         event.ignore()
 
@@ -58,26 +63,17 @@ class PdfListWidget(QListWidget):
             event.acceptProposedAction()
             return
 
-        # External files are accepted only when at least one PDF is included.
-        if event.mimeData().hasUrls():
-            has_pdf = any(
-                url.isLocalFile()
-                and Path(url.toLocalFile()).suffix.lower() == ".pdf"
-                for url in event.mimeData().urls()
-            )
-
-            if has_pdf:
-                event.acceptProposedAction()
-                return
+        if self._has_pdf_files(event):
+            event.acceptProposedAction()
+            return
 
         event.ignore()
 
     def dropEvent(self, event: QDropEvent):
-        # Internal drag: let QListWidget move the item first.
+        # Internal drag: move the item and synchronize the file order.
         if event.source() is self:
             super().dropEvent(event)
 
-            # Update the owner's PDF list after the visual order changes.
             parent = self.parentWidget()
 
             if isinstance(parent, MergeWidget):
@@ -85,7 +81,7 @@ class PdfListWidget(QListWidget):
 
             return
 
-        # External file drop.
+        # External files: only PDF files are added.
         if event.mimeData().hasUrls():
             parent = self.parentWidget()
 
@@ -99,66 +95,88 @@ class PdfListWidget(QListWidget):
 
 
 class MergeWidget(QWidget):
-    def __init__(self):
+    def __init__(
+        self,
+        language_manager: LanguageManager | None = None,
+    ):
         super().__init__()
 
-        # Keep the selected PDF paths as the widget's internal state.
+        # Use the shared language manager or English for standalone tests.
+        self.language = language_manager or LanguageManager("en")
+
         self.pdf_files: list[Path] = []
+        self.output_file: Path | None = None
 
         self.setup_ui()
 
     def setup_ui(self):
         layout = QVBoxLayout()
 
-        title = QLabel("Merge PDF")
-        layout.addWidget(title)
+        self.title_label = QLabel(
+            self.language.get("merge.title")
+        )
+        layout.addWidget(self.title_label)
 
         self.file_list = PdfListWidget(self)
         layout.addWidget(self.file_list)
 
         button_layout = QHBoxLayout()
 
-        add_button = QPushButton("Add PDF")
-        add_button.clicked.connect(self.add_pdf)
-        button_layout.addWidget(add_button)
+        self.add_button = QPushButton(
+            self.language.get("merge.add_pdf")
+        )
+        self.add_button.clicked.connect(self.add_pdf)
+        button_layout.addWidget(self.add_button)
 
-        remove_button = QPushButton("Remove Selected")
-        remove_button.clicked.connect(self.remove_selected)
-        button_layout.addWidget(remove_button)
+        self.remove_button = QPushButton(
+            self.language.get("merge.remove_selected")
+        )
+        self.remove_button.clicked.connect(self.remove_selected)
+        button_layout.addWidget(self.remove_button)
 
-        up_button = QPushButton("Move Up")
-        up_button.clicked.connect(self.move_up)
-        button_layout.addWidget(up_button)
+        self.up_button = QPushButton(
+            self.language.get("merge.move_up")
+        )
+        self.up_button.clicked.connect(self.move_up)
+        button_layout.addWidget(self.up_button)
 
-        down_button = QPushButton("Move Down")
-        down_button.clicked.connect(self.move_down)
-        button_layout.addWidget(down_button)
+        self.down_button = QPushButton(
+            self.language.get("merge.move_down")
+        )
+        self.down_button.clicked.connect(self.move_down)
+        button_layout.addWidget(self.down_button)
 
         layout.addLayout(button_layout)
 
         output_layout = QHBoxLayout()
 
-        self.output_label = QLabel("Output: Not selected")
+        self.output_label = QLabel(
+            self.language.get("merge.output_not_selected")
+        )
         output_layout.addWidget(self.output_label)
 
-        output_button = QPushButton("Choose Output")
-        output_button.clicked.connect(self.choose_output)
-        output_layout.addWidget(output_button)
+        self.output_button = QPushButton(
+            self.language.get("merge.choose_output")
+        )
+        self.output_button.clicked.connect(self.choose_output)
+        output_layout.addWidget(self.output_button)
 
         layout.addLayout(output_layout)
 
-        merge_button = QPushButton("Merge PDF")
-        merge_button.clicked.connect(self.merge_files)
-        layout.addWidget(merge_button)
+        self.merge_button = QPushButton(
+            self.language.get("merge.merge_pdf")
+        )
+        self.merge_button.clicked.connect(self.merge_files)
+        layout.addWidget(self.merge_button)
 
         self.setLayout(layout)
 
-        self.output_file: Path | None = None
-
     def add_pdf(self):
+        """Open a file dialog and add selected PDF files."""
+
         files, _ = QFileDialog.getOpenFileNames(
             self,
-            "Select PDF files",
+            self.language.get("merge.choose_pdf"),
             "",
             "PDF Files (*.pdf)",
         )
@@ -174,7 +192,6 @@ class MergeWidget(QWidget):
             if path.suffix.lower() != ".pdf":
                 continue
 
-            # Avoid adding the same PDF more than once.
             if path not in self.pdf_files:
                 self.pdf_files.append(path)
                 self.add_list_item(path)
@@ -188,15 +205,22 @@ class MergeWidget(QWidget):
             if not url.isLocalFile():
                 continue
 
-            files.append(url.toLocalFile())
+            path = Path(url.toLocalFile())
+
+            if path.suffix.lower() == ".pdf":
+                files.append(str(path))
 
         self.add_pdf_files(files)
 
     def sync_pdf_files(self):
-        """Synchronize the internal file order with the visible list."""
+        """Synchronize internal file order with the visible list."""
 
         self.pdf_files = [
-            Path(self.file_list.item(index).data(Qt.ItemDataRole.UserRole))
+            Path(
+                self.file_list.item(index).data(
+                    Qt.ItemDataRole.UserRole
+                )
+            )
             for index in range(self.file_list.count())
         ]
 
@@ -209,6 +233,8 @@ class MergeWidget(QWidget):
         self.file_list.addItem(item)
 
     def remove_selected(self):
+        """Remove the currently selected PDF."""
+
         row = self.file_list.currentRow()
 
         if row < 0:
@@ -218,12 +244,13 @@ class MergeWidget(QWidget):
         self.pdf_files.pop(row)
 
     def move_up(self):
+        """Move the selected PDF one position upward."""
+
         row = self.file_list.currentRow()
 
         if row <= 0:
             return
 
-        # Keep the internal file order synchronized with the displayed list.
         self.pdf_files[row - 1], self.pdf_files[row] = (
             self.pdf_files[row],
             self.pdf_files[row - 1],
@@ -234,12 +261,13 @@ class MergeWidget(QWidget):
         self.file_list.setCurrentRow(row - 1)
 
     def move_down(self):
+        """Move the selected PDF one position downward."""
+
         row = self.file_list.currentRow()
 
         if row < 0 or row >= len(self.pdf_files) - 1:
             return
 
-        # Keep the internal file order synchronized with the displayed list.
         self.pdf_files[row + 1], self.pdf_files[row] = (
             self.pdf_files[row],
             self.pdf_files[row + 1],
@@ -250,9 +278,11 @@ class MergeWidget(QWidget):
         self.file_list.setCurrentRow(row + 1)
 
     def choose_output(self):
+        """Choose the output path for the merged PDF."""
+
         file, _ = QFileDialog.getSaveFileName(
             self,
-            "Save merged PDF",
+            self.language.get("merge.choose_output"),
             "",
             "PDF Files (*.pdf)",
         )
@@ -261,40 +291,87 @@ class MergeWidget(QWidget):
             return
 
         self.output_file = Path(file)
-        self.output_label.setText(f"Output: {self.output_file}")
+
+        # Keep the output path visible for both users and tests.
+        self.output_label.setText(
+            f"{self.language.get('merge.output_prefix')}: "
+            f"{self.output_file}"
+        )
 
     def merge_files(self):
+        """Merge the selected PDF files."""
+
         if not self.pdf_files:
             QMessageBox.warning(
                 self,
-                "No PDF files",
-                "Please add at least one PDF file.",
+                self.language.get("merge.no_pdf_title"),
+                self.language.get("merge.no_pdf_files"),
             )
             return
 
         if self.output_file is None:
             QMessageBox.warning(
                 self,
-                "Output not selected",
-                "Please choose an output file.",
+                self.language.get("merge.no_output_title"),
+                self.language.get("merge.no_output"),
             )
             return
 
         try:
-            # Reuse the existing PDF merge logic instead of implementing
-            # PDF processing directly in the GUI layer.
+            # Reuse the existing PDF processing logic.
             merge_pdfs(self.pdf_files, self.output_file)
 
         except Exception as exc:
             QMessageBox.critical(
                 self,
-                "Merge failed",
+                self.language.get("merge.failed"),
                 str(exc),
             )
             return
 
         QMessageBox.information(
             self,
-            "Success",
-            "PDF files merged successfully.",
+            self.language.get("common.success"),
+            self.language.get("merge.success"),
         )
+
+    def refresh_ui(self):
+        """Refresh all visible text using the current language."""
+
+        self.title_label.setText(
+            self.language.get("merge.title")
+        )
+
+        self.add_button.setText(
+            self.language.get("merge.add_pdf")
+        )
+
+        self.remove_button.setText(
+            self.language.get("merge.remove_selected")
+        )
+
+        self.up_button.setText(
+            self.language.get("merge.move_up")
+        )
+
+        self.down_button.setText(
+            self.language.get("merge.move_down")
+        )
+
+        self.output_button.setText(
+            self.language.get("merge.choose_output")
+        )
+
+        self.merge_button.setText(
+            self.language.get("merge.merge_pdf")
+        )
+
+        if self.output_file is None:
+            self.output_label.setText(
+                self.language.get("merge.output_not_selected")
+            )
+        else:
+            self.output_label.setText(
+                f"{self.language.get('merge.output_prefix')}: "
+                f"{self.output_file}"
+            )

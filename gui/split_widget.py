@@ -17,64 +17,73 @@ from app.splitter import (
     split_pdf,
     validate_page_ranges,
 )
+from gui.i18n import LanguageManager
 
 
 class SplitWidget(QWidget):
-    def __init__(self):
+    def __init__(
+        self,
+        language_manager: LanguageManager | None = None,
+    ):
         super().__init__()
+
+        # Use the shared language manager or English for standalone tests.
+        self.language = language_manager or LanguageManager("en")
 
         self.input_file: Path | None = None
         self.output_dir: Path | None = None
 
+        # Allow PDF files to be dragged into the widget.
         self.setAcceptDrops(True)
 
         self.setup_ui()
 
     def set_input_file(self, path: Path):
-        # Keep the selected PDF path and displayed filename synchronized.
+        """Set the input PDF and update the displayed filename."""
+
         self.input_file = path
-        self.input_label.setText(f"PDF: {path.name}")
+        self.input_label.setText(
+            f"{self.language.get('split.input_prefix')}: "
+            f"{path.name}"
+        )
 
     def add_dropped_file(self, path: Path):
-        # Split only accepts PDF files as input.
+        """Accept only PDF files as split input."""
+
         if path.suffix.lower() != ".pdf":
             return
 
         self.set_input_file(path)
 
-    def dragEnterEvent(self, event: QDragEnterEvent):
-        if not event.mimeData().hasUrls():
-            event.ignore()
-            return
+    def _has_pdf_files(self, event) -> bool:
+        """Return whether the drag contains at least one PDF."""
 
-        has_pdf = any(
+        if not event.mimeData().hasUrls():
+            return False
+
+        return any(
             url.isLocalFile()
             and Path(url.toLocalFile()).suffix.lower() == ".pdf"
             for url in event.mimeData().urls()
         )
 
-        if has_pdf:
+    def dragEnterEvent(self, event: QDragEnterEvent):
+        # Only accept external drops containing PDF files.
+        if self._has_pdf_files(event):
             event.acceptProposedAction()
         else:
             event.ignore()
 
     def dragMoveEvent(self, event):
-        if not event.mimeData().hasUrls():
-            event.ignore()
-            return
-
-        has_pdf = any(
-            url.isLocalFile()
-            and Path(url.toLocalFile()).suffix.lower() == ".pdf"
-            for url in event.mimeData().urls()
-        )
-
-        if has_pdf:
+        # Only allow dragging PDF files over the widget.
+        if self._has_pdf_files(event):
             event.acceptProposedAction()
         else:
             event.ignore()
 
     def dropEvent(self, event: QDropEvent):
+        """Use the first dropped PDF as the input file."""
+
         if not event.mimeData().hasUrls():
             event.ignore()
             return
@@ -90,84 +99,102 @@ class SplitWidget(QWidget):
 
             self.add_dropped_file(path)
 
-            # Split only needs one input PDF.
+            # Split only requires one input PDF.
             break
 
         event.acceptProposedAction()
-
-
 
     def setup_ui(self):
         layout = QVBoxLayout()
         layout.setContentsMargins(30, 30, 30, 30)
         layout.setSpacing(15)
 
-        title = QLabel("Split PDF")
-        title.setObjectName("pageTitle")
-        layout.addWidget(title)
-
-        description = QLabel(
-            "Select a PDF, enter page ranges, and split it into separate files."
+        self.title_label = QLabel(
+            self.language.get("split.title")
         )
-        layout.addWidget(description)
+        self.title_label.setObjectName("pageTitle")
+        layout.addWidget(self.title_label)
 
-        section_title = QLabel("Input PDF")
-        section_title.setObjectName("sectionTitle")
-        layout.addWidget(section_title)
+        self.description_label = QLabel(
+            self.language.get("split.description")
+        )
+        layout.addWidget(self.description_label)
+
+        self.input_title = QLabel(
+            self.language.get("split.input_pdf")
+        )
+        self.input_title.setObjectName("sectionTitle")
+        layout.addWidget(self.input_title)
 
         input_layout = QHBoxLayout()
 
-        self.input_label = QLabel("PDF: Not selected")
+        self.input_label = QLabel(
+            f"{self.language.get('split.input_prefix')}: "
+            f"{self.language.get('common.not_selected')}"
+        )
         self.input_label.setObjectName("outputLabel")
         input_layout.addWidget(self.input_label)
 
-        input_button = QPushButton("Choose PDF")
-        input_button.clicked.connect(self.choose_pdf)
-        input_layout.addWidget(input_button)
+        self.input_button = QPushButton(
+            self.language.get("split.choose_pdf")
+        )
+        self.input_button.clicked.connect(self.choose_pdf)
+        input_layout.addWidget(self.input_button)
 
         layout.addLayout(input_layout)
 
-        range_title = QLabel("Page Ranges")
-        range_title.setObjectName("sectionTitle")
-        layout.addWidget(range_title)
+        self.range_title = QLabel(
+            self.language.get("split.page_ranges")
+        )
+        self.range_title.setObjectName("sectionTitle")
+        layout.addWidget(self.range_title)
 
         self.range_input = QLineEdit()
         self.range_input.setPlaceholderText(
-            "Example: 1-3, 5-7"
+            self.language.get("split.range_placeholder")
         )
         layout.addWidget(self.range_input)
 
-        output_title = QLabel("Output Folder")
-        output_title.setObjectName("sectionTitle")
-        layout.addWidget(output_title)
+        self.output_title = QLabel(
+            self.language.get("split.output_folder")
+        )
+        self.output_title.setObjectName("sectionTitle")
+        layout.addWidget(self.output_title)
 
         output_layout = QHBoxLayout()
 
-        self.output_label = QLabel("Output: Not selected")
+        self.output_label = QLabel(
+            f"{self.language.get('split.output_prefix')}: "
+            f"{self.language.get('common.not_selected')}"
+        )
         self.output_label.setObjectName("outputLabel")
         output_layout.addWidget(self.output_label)
 
-        output_button = QPushButton("Choose Output Folder")
-        output_button.clicked.connect(self.choose_output)
-        output_layout.addWidget(output_button)
+        self.output_button = QPushButton(
+            self.language.get("split.choose_output")
+        )
+        self.output_button.clicked.connect(self.choose_output)
+        output_layout.addWidget(self.output_button)
 
         layout.addLayout(output_layout)
 
-        split_button = QPushButton("Split PDF")
-        split_button.setObjectName("primaryButton")
-        split_button.clicked.connect(self.split_file)
-        layout.addWidget(split_button)
+        self.split_button = QPushButton(
+            self.language.get("split.split_pdf")
+        )
+        self.split_button.setObjectName("primaryButton")
+        self.split_button.clicked.connect(self.split_file)
+        layout.addWidget(self.split_button)
 
         layout.addStretch()
 
         self.setLayout(layout)
 
-
-
     def choose_pdf(self):
+        """Select the input PDF through a file dialog."""
+
         file, _ = QFileDialog.getOpenFileName(
             self,
-            "Select PDF file",
+            self.language.get("split.choose_pdf"),
             "",
             "PDF Files (*.pdf)",
         )
@@ -178,25 +205,31 @@ class SplitWidget(QWidget):
         self.set_input_file(Path(file))
 
     def choose_output(self):
+        """Select the output folder."""
+
         directory = QFileDialog.getExistingDirectory(
             self,
-            "Select output folder",
+            self.language.get("split.choose_output"),
         )
 
         if not directory:
             return
 
         self.output_dir = Path(directory)
+
         self.output_label.setText(
-            f"Output: {self.output_dir}"
+            f"{self.language.get('split.output_prefix')}: "
+            f"{self.output_dir}"
         )
 
     def split_file(self):
+        """Validate input and split the PDF."""
+
         if self.input_file is None:
             QMessageBox.warning(
                 self,
-                "PDF not selected",
-                "Please choose a PDF file.",
+                self.language.get("split.input_not_selected"),
+                self.language.get("split.choose_pdf_message"),
             )
             return
 
@@ -205,21 +238,21 @@ class SplitWidget(QWidget):
         if not page_range_text:
             QMessageBox.warning(
                 self,
-                "Page ranges not entered",
-                "Please enter page ranges.",
+                self.language.get("split.range_not_entered"),
+                self.language.get("split.enter_ranges_message"),
             )
             return
 
         if self.output_dir is None:
             QMessageBox.warning(
                 self,
-                "Output not selected",
-                "Please choose an output folder.",
+                self.language.get("split.output_not_selected"),
+                self.language.get("split.choose_output_message"),
             )
             return
 
         try:
-            # Convert the user's page range input into page range tuples.
+            # Convert the user's input into page range tuples.
             page_ranges = self.parse_page_ranges(
                 page_range_text
             )
@@ -228,7 +261,7 @@ class SplitWidget(QWidget):
                 self.input_file
             )
 
-            # Validate the requested ranges before modifying the PDF.
+            # Validate ranges before modifying the PDF.
             validate_page_ranges(
                 page_ranges,
                 page_count,
@@ -244,7 +277,7 @@ class SplitWidget(QWidget):
         except ValueError as exc:
             QMessageBox.warning(
                 self,
-                "Invalid input",
+                self.language.get("split.invalid_input"),
                 str(exc),
             )
             return
@@ -252,24 +285,28 @@ class SplitWidget(QWidget):
         except Exception as exc:
             QMessageBox.critical(
                 self,
-                "Split failed",
+                self.language.get("split.failed"),
                 str(exc),
             )
             return
 
         QMessageBox.information(
             self,
-            "Success",
-            f"PDF split successfully into {len(output_files)} file(s).",
+            self.language.get("common.success"),
+            self.language.get("split.success").format(
+                count=len(output_files)
+            ),
         )
 
     @staticmethod
     def parse_page_ranges(
         text: str,
     ) -> list[tuple[int, int]]:
+        """Convert page range text into page range tuples."""
+
         ranges = []
 
-        # Convert inputs such as "1-3, 5, 7-9" into page range tuples.
+        # Convert inputs such as "1-3, 5, 7-9".
         for part in text.split(","):
             part = part.strip()
 
@@ -293,3 +330,65 @@ class SplitWidget(QWidget):
             )
 
         return ranges
+
+    def refresh_ui(self):
+        """Refresh all visible text using the current language."""
+
+        self.title_label.setText(
+            self.language.get("split.title")
+        )
+
+        self.description_label.setText(
+            self.language.get("split.description")
+        )
+
+        self.input_title.setText(
+            self.language.get("split.input_pdf")
+        )
+
+        self.input_button.setText(
+            self.language.get("split.choose_pdf")
+        )
+
+        self.range_title.setText(
+            self.language.get("split.page_ranges")
+        )
+
+        self.range_input.setPlaceholderText(
+            self.language.get("split.range_placeholder")
+        )
+
+        self.output_title.setText(
+            self.language.get("split.output_folder")
+        )
+
+        self.output_button.setText(
+            self.language.get("split.choose_output")
+        )
+
+        self.split_button.setText(
+            self.language.get("split.split_pdf")
+        )
+
+        # Keep the currently selected path unchanged.
+        if self.input_file is None:
+            self.input_label.setText(
+                f"{self.language.get('split.input_prefix')}: "
+                f"{self.language.get('common.not_selected')}"
+            )
+        else:
+            self.input_label.setText(
+                f"{self.language.get('split.input_prefix')}: "
+                f"{self.input_file.name}"
+            )
+
+        if self.output_dir is None:
+            self.output_label.setText(
+                f"{self.language.get('split.output_prefix')}: "
+                f"{self.language.get('common.not_selected')}"
+            )
+        else:
+            self.output_label.setText(
+                f"{self.language.get('split.output_prefix')}: "
+                f"{self.output_dir}"
+            )
