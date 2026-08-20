@@ -11,3 +11,8 @@ __pycache__/
 # Input and output PDF files
 input/*.pdf
 output/*.pdf
+
+# PyInstaller
+/build/
+/dist/
+
