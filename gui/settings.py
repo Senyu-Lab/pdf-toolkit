@@ -1,8 +1,8 @@
 from PySide6.QtCore import QByteArray, QSettings
 
 
+# Manage persistent application settings.
 class AppSettings:
-    """Manage persistent application settings."""
 
     def __init__(self):
         self.settings = QSettings(
@@ -10,8 +10,8 @@ class AppSettings:
             "PDF-Toolkit",
         )
 
+    # Save the main window geometry.
     def save_window_geometry(self, geometry: QByteArray):
-        """Save the main window geometry."""
 
         self.settings.setValue(
             "window/geometry",
