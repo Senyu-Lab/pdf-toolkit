@@ -4,7 +4,6 @@ from gui.i18n.translations import TRANSLATIONS
 
 
 class LanguageManager(QObject):
-    """Manage the application's current language."""
 
     language_changed = Signal(str)
 
@@ -17,12 +16,10 @@ class LanguageManager(QObject):
         self.language = language
 
     def get(self, key: str) -> str:
-        """Return translated text for the current language."""
 
         return TRANSLATIONS[self.language].get(key, key)
 
     def set_language(self, language: str):
-        """Change the current language and notify listeners."""
 
         if language not in TRANSLATIONS:
             raise ValueError(f"Unsupported language: {language}")

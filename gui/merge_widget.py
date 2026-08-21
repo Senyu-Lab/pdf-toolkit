@@ -18,8 +18,8 @@ from app.merger import merge_pdfs
 from gui.i18n import LanguageManager
 
 
+# PDF list that supports external drops and internal reordering.
 class PdfListWidget(QListWidget):
-    """PDF list that supports external drops and internal reordering."""
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -34,7 +34,6 @@ class PdfListWidget(QListWidget):
         self.setDropIndicatorShown(True)
 
     def _has_pdf_files(self, event) -> bool:
-        """Return whether the drag contains at least one PDF file."""
 
         if not event.mimeData().hasUrls():
             return False
@@ -182,7 +181,6 @@ class MergeWidget(QWidget):
         self.setLayout(layout)
 
     def add_pdf(self):
-        """Open a file dialog and add selected PDF files."""
 
         files, _ = QFileDialog.getOpenFileNames(
             self,
@@ -194,7 +192,6 @@ class MergeWidget(QWidget):
         self.add_pdf_files(files)
 
     def add_pdf_files(self, files: list[str]):
-        """Add PDF files while preventing duplicates."""
 
         for file in files:
             path = Path(file)
@@ -207,7 +204,6 @@ class MergeWidget(QWidget):
                 self.add_list_item(path)
 
     def add_dropped_files(self, urls):
-        """Convert dropped local URLs into PDF file paths."""
 
         files = []
 
@@ -223,7 +219,6 @@ class MergeWidget(QWidget):
         self.add_pdf_files(files)
 
     def sync_pdf_files(self):
-        """Synchronize internal file order with the visible list."""
 
         self.pdf_files = [
             Path(
@@ -235,7 +230,6 @@ class MergeWidget(QWidget):
         ]
 
     def add_list_item(self, path: Path):
-        """Add a list item while storing its full file path."""
 
         item = QListWidgetItem(path.name)
         item.setData(Qt.ItemDataRole.UserRole, str(path))
@@ -243,7 +237,6 @@ class MergeWidget(QWidget):
         self.file_list.addItem(item)
 
     def remove_selected(self):
-        """Remove the currently selected PDF."""
 
         row = self.file_list.currentRow()
 
@@ -254,7 +247,6 @@ class MergeWidget(QWidget):
         self.pdf_files.pop(row)
 
     def move_up(self):
-        """Move the selected PDF one position upward."""
 
         row = self.file_list.currentRow()
 
@@ -271,7 +263,6 @@ class MergeWidget(QWidget):
         self.file_list.setCurrentRow(row - 1)
 
     def move_down(self):
-        """Move the selected PDF one position downward."""
 
         row = self.file_list.currentRow()
 
@@ -288,7 +279,6 @@ class MergeWidget(QWidget):
         self.file_list.setCurrentRow(row + 1)
 
     def choose_output(self):
-        """Choose the output path for the merged PDF."""
 
         file, _ = QFileDialog.getSaveFileName(
             self,
@@ -309,7 +299,6 @@ class MergeWidget(QWidget):
         )
 
     def merge_files(self):
-        """Merge the selected PDF files."""
 
         if not self.pdf_files:
             QMessageBox.warning(
@@ -346,7 +335,6 @@ class MergeWidget(QWidget):
         )
 
     def refresh_ui(self):
-        """Refresh all visible text using the current language."""
 
         self.title_label.setText(
             self.language.get("merge.title")

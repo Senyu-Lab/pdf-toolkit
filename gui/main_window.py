@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
 from gui.delete_widget import DeleteWidget
 from gui.i18n import LanguageManager
 from gui.merge_widget import MergeWidget
+from gui.settings import AppSettings
 from gui.split_widget import SplitWidget
 from gui.styles import APP_STYLE
 
@@ -25,6 +26,9 @@ class MainWindow(QMainWindow):
 
         self.setStyleSheet(APP_STYLE)
 
+
+        self.settings = AppSettings()
+
         # Use one language manager for the entire GUI.
         self.language = LanguageManager("en")
 
@@ -32,6 +36,7 @@ class MainWindow(QMainWindow):
         self.language.language_changed.connect(self.refresh_ui)
 
         self.setup_ui()
+        self.restore_window_state()
 
     def setup_ui(self):
         central_widget = QWidget()
@@ -98,7 +103,6 @@ class MainWindow(QMainWindow):
         self.show_merge_page()
 
     def change_language(self, index: int):
-        """Change the application language."""
 
         language = self.language_selector.itemData(index)
 
@@ -108,7 +112,6 @@ class MainWindow(QMainWindow):
         self.language.set_language(language)
 
     def refresh_ui(self, language: str | None = None):
-        """Refresh all visible application text."""
 
         self.setWindowTitle(
             self.language.get("app.title")
@@ -146,6 +149,18 @@ class MainWindow(QMainWindow):
             self.delete_widget
         )
 
+    def restore_window_state(self):
+        geometry = self.settings.get_window_geometry()
+
+        if geometry is not None:
+            self.restoreGeometry(geometry)
+
+    def closeEvent(self, event):
+        self.settings.save_window_geometry(
+            self.saveGeometry()
+        )
+
+        event.accept()
 
 def main():
     app = QApplication([])

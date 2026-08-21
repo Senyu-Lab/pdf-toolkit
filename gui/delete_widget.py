@@ -39,7 +39,6 @@ class DeleteWidget(QWidget):
         self.setup_ui()
 
     def add_dropped_file(self, path: Path):
-        """Accept only PDF files as delete input."""
 
         if path.suffix.lower() != ".pdf":
             return
@@ -47,7 +46,6 @@ class DeleteWidget(QWidget):
         self.set_input_file(path)
 
     def set_input_file(self, path: Path):
-        """Set the input PDF and update the displayed filename."""
 
         self.input_file = path
         self.input_label.setText(
@@ -56,7 +54,6 @@ class DeleteWidget(QWidget):
         )
 
     def _has_pdf_files(self, event) -> bool:
-        """Return whether the drag contains at least one PDF."""
 
         if not event.mimeData().hasUrls():
             return False
@@ -82,7 +79,6 @@ class DeleteWidget(QWidget):
             event.ignore()
 
     def dropEvent(self, event: QDropEvent):
-        """Use the first dropped PDF as the input file."""
 
         if not event.mimeData().hasUrls():
             event.ignore()
@@ -190,7 +186,6 @@ class DeleteWidget(QWidget):
         self.setLayout(layout)
 
     def choose_pdf(self):
-        """Select the input PDF through a file dialog."""
 
         file, _ = QFileDialog.getOpenFileName(
             self,
@@ -205,7 +200,6 @@ class DeleteWidget(QWidget):
         self.set_input_file(Path(file))
 
     def choose_output(self):
-        """Select the output PDF file."""
 
         file, _ = QFileDialog.getSaveFileName(
             self,
@@ -225,7 +219,6 @@ class DeleteWidget(QWidget):
         )
 
     def delete_file(self):
-        """Validate input and delete the selected pages."""
 
         if self.input_file is None:
             QMessageBox.warning(
@@ -302,7 +295,6 @@ class DeleteWidget(QWidget):
     def parse_page_ranges(
         text: str,
     ) -> list[tuple[int, int]]:
-        """Convert page range text into page range tuples."""
 
         ranges = []
 
@@ -332,7 +324,6 @@ class DeleteWidget(QWidget):
         return ranges
 
     def refresh_ui(self):
-        """Refresh all visible text using the current language."""
 
         self.title_label.setText(
             self.language.get("delete.title")
