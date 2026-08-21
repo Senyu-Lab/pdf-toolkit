@@ -3,9 +3,8 @@ from PySide6.QtCore import QByteArray, QSettings
 
 # Manage persistent application settings.
 class AppSettings:
-
-    def __init__(self):
-        self.settings = QSettings(
+    def __init__(self, settings: QSettings | None = None):
+        self.settings = settings or QSettings(
             "Senyu-Lab",
             "PDF-Toolkit",
         )
@@ -18,8 +17,8 @@ class AppSettings:
             geometry,
         )
 
+    # Return the saved window geometry.
     def get_window_geometry(self) -> QByteArray | None:
-        """Return the saved window geometry."""
 
         geometry = self.settings.value(
             "window/geometry",
@@ -29,3 +28,17 @@ class AppSettings:
             return geometry
 
         return None
+
+    def save_language(self, language: str):
+        self.settings.setValue(
+            "language",
+            language,
+        )
+
+    def get_language(self) -> str:
+        language = self.settings.value(
+            "language",
+            "en",
+        )
+
+        return language

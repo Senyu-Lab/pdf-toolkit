@@ -19,18 +19,20 @@ from gui.styles import APP_STYLE
 
 
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(
+            self,
+            settings: AppSettings | None = None,
+    ):
         super().__init__()
 
         self.resize(900, 600)
 
         self.setStyleSheet(APP_STYLE)
 
+        self.settings = settings or AppSettings()
 
-        self.settings = AppSettings()
-
-        # Use one language manager for the entire GUI.
-        self.language = LanguageManager("en")
+        language = self.settings.get_language()
+        self.language = LanguageManager(language)
 
         # Refresh the UI whenever the language changes.
         self.language.language_changed.connect(self.refresh_ui)
@@ -75,6 +77,13 @@ class MainWindow(QMainWindow):
             self.change_language
         )
 
+        index = self.language_selector.findData(
+            self.language.language
+        )
+
+        if index >= 0:
+            self.language_selector.setCurrentIndex(index)
+
         main_layout.addLayout(navigation_layout)
         main_layout.addWidget(self.pages)
 
@@ -103,13 +112,13 @@ class MainWindow(QMainWindow):
         self.show_merge_page()
 
     def change_language(self, index: int):
-
         language = self.language_selector.itemData(index)
 
         if language is None:
             return
 
         self.language.set_language(language)
+        self.settings.save_language(language)
 
     def refresh_ui(self, language: str | None = None):
 

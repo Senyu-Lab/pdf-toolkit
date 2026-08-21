@@ -32,3 +32,19 @@ def test_get_window_geometry_with_invalid_type(qapp):
     )
 
     assert settings.get_window_geometry() is None
+
+def test_save_and_get_language(qapp):
+    settings = AppSettings()
+
+    settings.settings.clear()
+
+    settings.save_language("zh")
+
+    assert settings.get_language() == "zh"
+
+def test_get_language_without_saved_value(qapp):
+    settings = AppSettings()
+
+    settings.settings.clear()
+
+    assert settings.get_language() == "en"

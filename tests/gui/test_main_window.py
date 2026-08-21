@@ -1,8 +1,15 @@
 from gui.main_window import MainWindow
 
 
-def test_main_window_default_language(qtbot):
-    window = MainWindow()
+def test_main_window_default_language(
+    qtbot,
+    app_settings,
+):
+    window = MainWindow(app_settings)
+    qtbot.addWidget(window)
+
+    assert window.language.language == "en"
+
     qtbot.addWidget(window)
 
     assert window.language.language == "en"
@@ -34,8 +41,12 @@ def test_main_window_switch_to_japanese(qtbot):
     assert window.split_button.text() == "PDF の分割"
     assert window.delete_button.text() == "ページを削除"
 
-def test_merge_widget_refreshes_with_language(qtbot):
-    window = MainWindow()
+def test_merge_widget_refreshes_with_language(
+    qtbot,
+    app_settings,
+):
+    window = MainWindow(app_settings)
+    qtbot.addWidget(window)
     qtbot.addWidget(window)
 
     assert window.merge_widget.title_label.text() == "Merge PDF"
