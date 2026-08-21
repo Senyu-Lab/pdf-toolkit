@@ -109,6 +109,10 @@ class MergeWidget(QWidget):
 
         self.setup_ui()
 
+    def clear_all(self):
+        self.pdf_files.clear()
+        self.file_list.clear()
+
     def setup_ui(self):
         layout = QVBoxLayout()
 
@@ -133,6 +137,12 @@ class MergeWidget(QWidget):
         )
         self.remove_button.clicked.connect(self.remove_selected)
         button_layout.addWidget(self.remove_button)
+
+        self.clear_button = QPushButton(
+            self.language.get("merge.clear_all")
+        )
+        self.clear_button.clicked.connect(self.clear_all)
+        button_layout.addWidget(self.clear_button)
 
         self.up_button = QPushButton(
             self.language.get("merge.move_up")
@@ -348,6 +358,10 @@ class MergeWidget(QWidget):
 
         self.remove_button.setText(
             self.language.get("merge.remove_selected")
+        )
+
+        self.clear_button.setText(
+            self.language.get("merge.clear_all")
         )
 
         self.up_button.setText(
