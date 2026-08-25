@@ -37,3 +37,6 @@ class Database:
             self.connection.executescript(file.read())
 
         self.connection.commit()
+
+    def get_connection(self) -> sqlite3.Connection:
+        return self.connection

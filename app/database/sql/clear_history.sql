@@ -1,0 +1,1 @@
+DELETE FROM operation_history;
