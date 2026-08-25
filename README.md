@@ -100,6 +100,27 @@ The language manager provides a centralized way to manage translated interface t
 
 Additional languages can be added by extending the translation resources without changing the core PDF processing logic.
 
+## Database
+
+The project uses SQLite for local data persistence and is currently
+developing the foundation for operation history.
+
+The database layer is separated from the GUI and PDF processing logic.
+SQL statements are maintained separately from Python code to keep the
+database layer modular and maintainable.
+
+The current database layer provides:
+
+- SQLite database initialization
+- Database connection management
+- Operation history repository
+- Insert operations
+- Query operations
+- Delete operations
+- Clear operations
+- Input validation
+- Automated database tests
+
 ## Windows Executable
 
 A pre-built Windows x64 executable is available from the GitHub Releases page.
@@ -219,16 +240,24 @@ Run all tests with:
 pytest
 ```
 
-The project includes automated tests covering:
+The project uses `pytest` and `pytest-qt` for automated testing.
 
-* PDF merging
-* PDF splitting
-* Page deletion
-* Page range validation
-* CLI behavior
-* GUI functionality
-* Drag and drop functionality
-* Multilingual GUI components
+The test suite covers:
+
+- PDF merging
+- PDF splitting
+- Page deletion
+- Page range validation
+- File utilities
+- CLI behavior
+- GUI functionality
+- Drag and drop functionality
+- Multilingual GUI components
+- User settings
+- Database initialization
+- SQLite schema
+- Operation history repository
+- Input validation
 
 The current `v1.1.0` test suite passes:
 
