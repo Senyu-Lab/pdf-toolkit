@@ -17,6 +17,7 @@ from gui.i18n import LanguageManager
 from gui.merge_widget import MergeWidget
 from gui.settings import AppSettings
 from gui.split_widget import SplitWidget
+from gui.history_widget import HistoryWidget
 from gui.styles import APP_STYLE
 
 
@@ -56,13 +57,19 @@ class MainWindow(QMainWindow):
         self.merge_button = QPushButton()
         self.split_button = QPushButton()
         self.delete_button = QPushButton()
+        self.history_button = QPushButton()
 
         navigation_layout.addWidget(self.merge_button)
         navigation_layout.addWidget(self.split_button)
         navigation_layout.addWidget(self.delete_button)
+        navigation_layout.addWidget(self.history_button)
         navigation_layout.addStretch()
 
         self.pages = QStackedWidget()
+        self.pages.currentChanged.connect(
+            self._on_page_changed
+        )
+
 
         # Share the same language manager and history repository with every page.
         self.merge_widget = MergeWidget(
@@ -78,9 +85,15 @@ class MainWindow(QMainWindow):
             self.history_repository,
         )
 
+        self.history_widget = HistoryWidget(
+            self.language,
+            self.history_repository,
+        )
+
         self.pages.addWidget(self.merge_widget)
         self.pages.addWidget(self.split_widget)
         self.pages.addWidget(self.delete_widget)
+        self.pages.addWidget(self.history_widget)
 
         # Language selector.
         self.language_selector = QComboBox()
@@ -123,6 +136,10 @@ class MainWindow(QMainWindow):
         self.delete_button.clicked.connect(
             self.show_delete_page
         )
+        self.history_button.clicked.connect(
+            self.show_history_page
+        )
+
 
         self.refresh_ui()
         self.show_merge_page()
@@ -154,10 +171,15 @@ class MainWindow(QMainWindow):
             self.language.get("navigation.delete")
         )
 
+        self.history_button.setText(
+            self.language.get("navigation.history")
+        )
+
         # Refresh the individual pages.
         self.merge_widget.refresh_ui()
         self.split_widget.refresh_ui()
         self.delete_widget.refresh_ui()
+        self.history_widget.refresh_ui()
 
     def show_merge_page(self):
         self.pages.setCurrentWidget(
@@ -174,6 +196,11 @@ class MainWindow(QMainWindow):
             self.delete_widget
         )
 
+    def show_history_page(self):
+        self.pages.setCurrentWidget(
+            self.history_widget
+        )
+
     def restore_window_state(self):
         geometry = self.settings.get_window_geometry()
 
@@ -186,6 +213,10 @@ class MainWindow(QMainWindow):
         )
 
         event.accept()
+
+    def _on_page_changed(self, index: int):
+        if self.pages.widget(index) is self.history_widget:
+            self.history_widget.refresh_history()
 
 def main():
     app = QApplication([])

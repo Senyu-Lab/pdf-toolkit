@@ -86,3 +86,42 @@ def test_language_switch_keeps_merge_state(qtbot, tmp_path):
 
     assert window.merge_widget.pdf_files == [pdf_file]
     assert window.merge_widget.output_file == output_file
+
+def test_history_page_is_available(qtbot):
+    window = MainWindow()
+
+    qtbot.addWidget(window)
+
+    assert window.pages.indexOf(
+        window.history_widget
+    ) >= 0
+
+def test_history_refreshes_when_page_is_selected(
+    qtbot,
+    monkeypatch,
+):
+    window = MainWindow()
+
+    qtbot.addWidget(window)
+
+    refresh_called = False
+
+    def fake_refresh():
+        nonlocal refresh_called
+        refresh_called = True
+
+    monkeypatch.setattr(
+        window.history_widget,
+        "refresh_history",
+        fake_refresh,
+    )
+
+    history_index = window.pages.indexOf(
+        window.history_widget
+    )
+
+    window.pages.setCurrentIndex(
+        history_index
+    )
+
+    assert refresh_called
