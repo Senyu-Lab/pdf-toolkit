@@ -4,6 +4,8 @@ import pymupdf
 from PySide6.QtCore import QUrl
 from PySide6.QtWidgets import QFileDialog, QMessageBox
 
+from app.database.database import Database
+from app.database.repository import HistoryRepository
 from gui.merge_widget import MergeWidget
 
 
@@ -314,3 +316,105 @@ def test_add_dropped_mixed_files(qtbot, tmp_path):
     assert widget.file_list.count() == 2
     assert widget.file_list.item(0).text() == "test1.pdf"
     assert widget.file_list.item(1).text() == "test2.PDF"
+
+def test_merge_files_records_success_history(
+    qtbot,
+    tmp_path,
+    monkeypatch,
+):
+    database = Database(tmp_path / "test.db")
+    repository = HistoryRepository(database)
+
+    widget = MergeWidget(
+        history_repository=repository,
+    )
+
+    qtbot.addWidget(widget)
+
+    pdf1 = tmp_path / "one.pdf"
+    pdf2 = tmp_path / "two.pdf"
+    output = tmp_path / "merged.pdf"
+
+    widget.pdf_files = [pdf1, pdf2]
+    widget.output_file = output
+
+    monkeypatch.setattr(
+        "gui.merge_widget.merge_pdfs",
+        lambda pdf_files, output_file: None,
+    )
+
+    monkeypatch.setattr(
+        QMessageBox,
+        "information",
+        lambda *args: None,
+    )
+
+    widget.merge_files()
+
+    operations = repository.get_operations()
+
+    assert len(operations) == 1
+
+    operation = operations[0]
+
+    assert operation["operation_type"] == "merge"
+    assert operation["status"] == "success"
+    assert operation["input_files"] == [
+        str(pdf1),
+        str(pdf2),
+    ]
+    assert operation["output_files"] == [
+        str(output),
+    ]
+    assert operation["error_message"] is None
+
+def test_merge_files_records_failed_history(
+    qtbot,
+    tmp_path,
+    monkeypatch,
+):
+    database = Database(tmp_path / "test.db")
+    repository = HistoryRepository(database)
+
+    widget = MergeWidget(
+        history_repository=repository,
+    )
+
+    qtbot.addWidget(widget)
+
+    pdf = tmp_path / "invalid.pdf"
+    output = tmp_path / "merged.pdf"
+
+    widget.pdf_files = [pdf]
+    widget.output_file = output
+
+    def raise_error(pdf_files, output_file):
+        raise RuntimeError("Merge failed.")
+
+    monkeypatch.setattr(
+        "gui.merge_widget.merge_pdfs",
+        raise_error,
+    )
+
+    monkeypatch.setattr(
+        QMessageBox,
+        "critical",
+        lambda *args: None,
+    )
+
+    widget.merge_files()
+
+    operations = repository.get_operations()
+
+    assert len(operations) == 1
+
+    operation = operations[0]
+
+    assert operation["operation_type"] == "merge"
+    assert operation["status"] == "failed"
+    assert operation["input_files"] == [
+        str(pdf),
+    ]
+    assert operation["output_files"] == []
+    assert operation["error_message"] == "Merge failed."
+

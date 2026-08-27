@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from app.database.repository import HistoryRepository
 from app.merger import merge_pdfs
 from gui.i18n import LanguageManager
 
@@ -95,14 +96,15 @@ class PdfListWidget(QListWidget):
 
 class MergeWidget(QWidget):
     def __init__(
-        self,
-        language_manager: LanguageManager | None = None,
+            self,
+            language_manager: LanguageManager | None = None,
+            history_repository: HistoryRepository | None = None,
     ):
         super().__init__()
 
         # Use the shared language manager or English for standalone tests.
         self.language = language_manager or LanguageManager("en")
-
+        self.history_repository = history_repository
         self.pdf_files: list[Path] = []
         self.output_file: Path | None = None
 
@@ -321,12 +323,29 @@ class MergeWidget(QWidget):
             merge_pdfs(self.pdf_files, self.output_file)
 
         except Exception as exc:
+            if self.history_repository is not None:
+                self.history_repository.add_operation(
+                    operation_type="merge",
+                    status="failed",
+                    input_files=[str(path) for path in self.pdf_files],
+                    output_files=[],
+                    error_message=str(exc),
+                )
+
             QMessageBox.critical(
                 self,
                 self.language.get("merge.failed"),
                 str(exc),
             )
             return
+
+        if self.history_repository is not None:
+            self.history_repository.add_operation(
+                operation_type="merge",
+                status="success",
+                input_files=[str(path) for path in self.pdf_files],
+                output_files=[str(self.output_file)],
+            )
 
         QMessageBox.information(
             self,

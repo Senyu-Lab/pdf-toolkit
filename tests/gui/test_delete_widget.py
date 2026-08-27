@@ -3,6 +3,8 @@ from pathlib import Path
 import pymupdf
 from PySide6.QtWidgets import QMessageBox
 
+from app.database.database import Database
+from app.database.repository import HistoryRepository
 from gui.delete_widget import DeleteWidget
 
 
@@ -265,3 +267,120 @@ def test_add_dropped_uppercase_pdf_file(qtbot, tmp_path):
 
     assert widget.input_file == pdf_file
     assert widget.input_label.text() == "PDF: test.PDF"
+
+def test_delete_file_records_success_history(
+    qtbot,
+    tmp_path,
+    monkeypatch,
+):
+    database = Database(tmp_path / "test.db")
+    repository = HistoryRepository(database)
+
+    widget = DeleteWidget(
+        history_repository=repository,
+    )
+
+    qtbot.addWidget(widget)
+
+    input_file = tmp_path / "input.pdf"
+    output_file = tmp_path / "output.pdf"
+
+    widget.input_file = input_file
+    widget.output_file = output_file
+
+    monkeypatch.setattr(
+        "gui.delete_widget.get_page_count",
+        lambda path: 10,
+    )
+
+    monkeypatch.setattr(
+        "gui.delete_widget.delete_pages",
+        lambda input_file, output_file, page_ranges: None,
+    )
+
+    monkeypatch.setattr(
+        QMessageBox,
+        "information",
+        lambda *args: None,
+    )
+
+    widget.range_input.setText("1-2")
+
+    widget.delete_file()
+
+    operations = repository.get_operations()
+
+    assert len(operations) == 1
+
+    operation = operations[0]
+
+    assert operation["operation_type"] == "delete"
+    assert operation["status"] == "success"
+    assert operation["input_files"] == [
+        str(input_file),
+    ]
+    assert operation["output_files"] == [
+        str(output_file),
+    ]
+    assert operation["error_message"] is None
+
+def test_delete_file_records_failed_history(
+    qtbot,
+    tmp_path,
+    monkeypatch,
+):
+    database = Database(tmp_path / "test.db")
+    repository = HistoryRepository(database)
+
+    widget = DeleteWidget(
+        history_repository=repository,
+    )
+
+    qtbot.addWidget(widget)
+
+    input_file = tmp_path / "input.pdf"
+    output_file = tmp_path / "output.pdf"
+
+    widget.input_file = input_file
+    widget.output_file = output_file
+
+    monkeypatch.setattr(
+        "gui.delete_widget.get_page_count",
+        lambda path: 10,
+    )
+
+    def raise_error(
+        input_file,
+        output_file,
+        page_ranges,
+    ):
+        raise RuntimeError("Delete failed.")
+
+    monkeypatch.setattr(
+        "gui.delete_widget.delete_pages",
+        raise_error,
+    )
+
+    monkeypatch.setattr(
+        QMessageBox,
+        "critical",
+        lambda *args: None,
+    )
+
+    widget.range_input.setText("1-2")
+
+    widget.delete_file()
+
+    operations = repository.get_operations()
+
+    assert len(operations) == 1
+
+    operation = operations[0]
+
+    assert operation["operation_type"] == "delete"
+    assert operation["status"] == "failed"
+    assert operation["input_files"] == [
+        str(input_file),
+    ]
+    assert operation["output_files"] == []
+    assert operation["error_message"] == "Delete failed."

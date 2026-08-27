@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from app.database.repository import HistoryRepository
 from app.page_manager import delete_pages
 from app.splitter import (
     get_page_count,
@@ -22,13 +23,16 @@ from gui.i18n import LanguageManager
 
 class DeleteWidget(QWidget):
     def __init__(
-        self,
-        language_manager: LanguageManager | None = None,
+            self,
+            language_manager: LanguageManager | None = None,
+            history_repository: HistoryRepository | None = None,
     ):
         super().__init__()
 
         # Use the shared language manager or English for standalone tests.
+
         self.language = language_manager or LanguageManager("en")
+        self.history_repository = history_repository
 
         self.input_file: Path | None = None
         self.output_file: Path | None = None
@@ -269,6 +273,14 @@ class DeleteWidget(QWidget):
                 page_ranges,
             )
 
+            if self.history_repository is not None:
+                self.history_repository.add_operation(
+                    operation_type="delete",
+                    status="success",
+                    input_files=[str(self.input_file)],
+                    output_files=[str(self.output_file)],
+                )
+
         except ValueError as exc:
             QMessageBox.warning(
                 self,
@@ -277,12 +289,24 @@ class DeleteWidget(QWidget):
             )
             return
 
+
         except Exception as exc:
+
+            if self.history_repository is not None:
+                self.history_repository.add_operation(
+                    operation_type="delete",
+                    status="failed",
+                    input_files=[str(self.input_file)],
+                    output_files=[],
+                    error_message=str(exc),
+                )
+
             QMessageBox.critical(
                 self,
                 self.language.get("delete.failed"),
                 str(exc),
             )
+
             return
 
         QMessageBox.information(

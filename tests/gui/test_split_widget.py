@@ -3,6 +3,8 @@ from pathlib import Path
 import pymupdf
 from PySide6.QtWidgets import QMessageBox
 
+from app.database.database import Database
+from app.database.repository import HistoryRepository
 from gui.split_widget import SplitWidget
 
 
@@ -357,3 +359,130 @@ def test_add_dropped_uppercase_pdf_file(qtbot, tmp_path):
 
     assert widget.input_file == pdf_file
     assert widget.input_label.text() == "PDF: test.PDF"
+
+def test_split_files_records_success_history(
+    qtbot,
+    tmp_path,
+    monkeypatch,
+):
+    database = Database(tmp_path / "test.db")
+    repository = HistoryRepository(database)
+
+    widget = SplitWidget(
+        history_repository=repository,
+    )
+
+    qtbot.addWidget(widget)
+
+    input_file = tmp_path / "input.pdf"
+    output_dir = tmp_path / "output"
+
+    output_dir.mkdir()
+
+    output_files = [
+        output_dir / "input_1.pdf",
+        output_dir / "input_2.pdf",
+    ]
+
+    widget.input_file = input_file
+    widget.output_dir = output_dir
+
+    monkeypatch.setattr(
+        "gui.split_widget.get_page_count",
+        lambda path: 10,
+    )
+
+    monkeypatch.setattr(
+        "gui.split_widget.split_pdf",
+        lambda input_file, output_dir, page_ranges: output_files,
+    )
+
+    monkeypatch.setattr(
+        QMessageBox,
+        "information",
+        lambda *args: None,
+    )
+
+    widget.range_input.setText("1-5,6-10")
+
+    widget.split_file()
+
+    operations = repository.get_operations()
+
+    assert len(operations) == 1
+
+    operation = operations[0]
+
+    assert operation["operation_type"] == "split"
+    assert operation["status"] == "success"
+    assert operation["input_files"] == [
+        str(input_file),
+    ]
+    assert operation["output_files"] == [
+        str(output_files[0]),
+        str(output_files[1]),
+    ]
+    assert operation["error_message"] is None
+
+def test_split_files_records_failed_history(
+    qtbot,
+    tmp_path,
+    monkeypatch,
+):
+    database = Database(tmp_path / "test.db")
+    repository = HistoryRepository(database)
+
+    widget = SplitWidget(
+        history_repository=repository,
+    )
+
+    qtbot.addWidget(widget)
+
+    input_file = tmp_path / "input.pdf"
+    output_dir = tmp_path / "output"
+
+    output_dir.mkdir()
+
+    widget.input_file = input_file
+    widget.output_dir = output_dir
+
+    monkeypatch.setattr(
+        "gui.split_widget.get_page_count",
+        lambda path: 10,
+    )
+
+    def raise_error(
+        input_file,
+        output_dir,
+        page_ranges,
+    ):
+        raise RuntimeError("Split failed.")
+
+    monkeypatch.setattr(
+        "gui.split_widget.split_pdf",
+        raise_error,
+    )
+
+    monkeypatch.setattr(
+        QMessageBox,
+        "critical",
+        lambda *args: None,
+    )
+
+    widget.range_input.setText("1-5")
+
+    widget.split_file()
+
+    operations = repository.get_operations()
+
+    assert len(operations) == 1
+
+    operation = operations[0]
+
+    assert operation["operation_type"] == "split"
+    assert operation["status"] == "failed"
+    assert operation["input_files"] == [
+        str(input_file),
+    ]
+    assert operation["output_files"] == []
+    assert operation["error_message"] == "Split failed."

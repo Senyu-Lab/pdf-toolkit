@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from app.database.repository import HistoryRepository
 from app.splitter import (
     get_page_count,
     split_pdf,
@@ -22,13 +23,15 @@ from gui.i18n import LanguageManager
 
 class SplitWidget(QWidget):
     def __init__(
-        self,
-        language_manager: LanguageManager | None = None,
+            self,
+            language_manager: LanguageManager | None = None,
+            history_repository: HistoryRepository | None = None,
     ):
         super().__init__()
 
         # Use the shared language manager or English for standalone tests.
         self.language = language_manager or LanguageManager("en")
+        self.history_repository = history_repository
 
         self.input_file: Path | None = None
         self.output_dir: Path | None = None
@@ -249,7 +252,6 @@ class SplitWidget(QWidget):
             page_ranges = self.parse_page_ranges(
                 page_range_text
             )
-
             page_count = get_page_count(
                 self.input_file
             )
@@ -267,6 +269,14 @@ class SplitWidget(QWidget):
                 page_ranges,
             )
 
+            if self.history_repository is not None:
+                self.history_repository.add_operation(
+                    operation_type="split",
+                    status="success",
+                    input_files=[str(self.input_file)],
+                    output_files=[str(path) for path in output_files],
+                )
+
         except ValueError as exc:
             QMessageBox.warning(
                 self,
@@ -276,6 +286,15 @@ class SplitWidget(QWidget):
             return
 
         except Exception as exc:
+            if self.history_repository is not None:
+                self.history_repository.add_operation(
+                    operation_type="split",
+                    status="failed",
+                    input_files=[str(self.input_file)],
+                    output_files=[],
+                    error_message=str(exc),
+                )
+
             QMessageBox.critical(
                 self,
                 self.language.get("split.failed"),

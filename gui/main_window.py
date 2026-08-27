@@ -10,6 +10,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from app.database.database import Database
+from app.database.repository import HistoryRepository
 from gui.delete_widget import DeleteWidget
 from gui.i18n import LanguageManager
 from gui.merge_widget import MergeWidget
@@ -30,6 +32,11 @@ class MainWindow(QMainWindow):
         self.setStyleSheet(APP_STYLE)
 
         self.settings = settings or AppSettings()
+
+        self.database = Database()
+        self.history_repository = HistoryRepository(
+            self.database,
+        )
 
         language = self.settings.get_language()
         self.language = LanguageManager(language)
@@ -57,10 +64,19 @@ class MainWindow(QMainWindow):
 
         self.pages = QStackedWidget()
 
-        # Share the same language manager with every page.
-        self.merge_widget = MergeWidget(self.language)
-        self.split_widget = SplitWidget(self.language)
-        self.delete_widget = DeleteWidget(self.language)
+        # Share the same language manager and history repository with every page.
+        self.merge_widget = MergeWidget(
+            self.language,
+            self.history_repository,
+        )
+        self.split_widget = SplitWidget(
+            self.language,
+            self.history_repository,
+        )
+        self.delete_widget = DeleteWidget(
+            self.language,
+            self.history_repository,
+        )
 
         self.pages.addWidget(self.merge_widget)
         self.pages.addWidget(self.split_widget)
