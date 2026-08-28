@@ -13,11 +13,11 @@ from PySide6.QtWidgets import (
 from app.database.database import Database
 from app.database.repository import HistoryRepository
 from gui.delete_widget import DeleteWidget
+from gui.history_widget import HistoryWidget
 from gui.i18n import LanguageManager
 from gui.merge_widget import MergeWidget
 from gui.settings import AppSettings
 from gui.split_widget import SplitWidget
-from gui.history_widget import HistoryWidget
 from gui.styles import APP_STYLE
 
 
