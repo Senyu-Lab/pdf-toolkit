@@ -2,8 +2,8 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QHeaderView,
-    QMessageBox,
     QLabel,
+    QMessageBox,
     QPushButton,
     QTableWidget,
     QTableWidgetItem,

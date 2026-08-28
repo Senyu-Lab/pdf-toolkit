@@ -1,7 +1,6 @@
 import pytest
 from PySide6.QtWidgets import QMessageBox
 
-
 from app.database.database import Database
 from app.database.repository import HistoryRepository
 from gui.history_widget import HistoryWidget
