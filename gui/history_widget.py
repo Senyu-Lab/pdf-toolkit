@@ -1,6 +1,8 @@
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QHeaderView,
+    QMessageBox,
     QLabel,
     QPushButton,
     QTableWidget,
@@ -61,10 +63,17 @@ class HistoryWidget(QWidget):
             self.refresh_history
         )
 
+        self.delete_button = QPushButton()
+        self.delete_button.setObjectName("secondaryButton")
+        self.delete_button.clicked.connect(
+            self.delete_selected_operation
+        )
+
         layout.addWidget(self.title_label)
         layout.addWidget(self.description_label)
         layout.addWidget(self.history_table)
         layout.addWidget(self.refresh_button)
+        layout.addWidget(self.delete_button)
 
         self.setLayout(layout)
 
@@ -80,12 +89,17 @@ class HistoryWidget(QWidget):
         self.history_table.setRowCount(len(operations))
 
         for row, operation in enumerate(operations):
+            time_item = QTableWidgetItem(
+                operation["created_at"]
+            )
+            time_item.setData(
+                Qt.ItemDataRole.UserRole,
+                operation["id"],
+            )
             self.history_table.setItem(
                 row,
                 0,
-                QTableWidgetItem(
-                    operation["created_at"]
-                ),
+                time_item,
             )
 
             self.history_table.setItem(
@@ -120,6 +134,42 @@ class HistoryWidget(QWidget):
                 ),
             )
 
+    def delete_selected_operation(self):
+        row = self.history_table.currentRow()
+
+        if row < 0:
+            return
+
+        item = self.history_table.item(row, 0)
+
+        if item is None:
+            return
+
+        operation_id = item.data(
+            Qt.ItemDataRole.UserRole
+        )
+
+        if operation_id is None:
+            return
+
+        result = QMessageBox.question(
+            self,
+            self.language.get("history.delete_title"),
+            self.language.get("history.delete_confirmation"),
+            QMessageBox.StandardButton.Yes
+            | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+
+        if result != QMessageBox.StandardButton.Yes:
+            return
+
+        self.history_repository.delete_operation(
+            operation_id
+        )
+
+        self.refresh_history()
+
     def refresh_ui(self):
         self.title_label.setText(
             self.language.get("history.title")
@@ -141,4 +191,8 @@ class HistoryWidget(QWidget):
 
         self.refresh_button.setText(
             self.language.get("history.refresh")
+        )
+
+        self.delete_button.setText(
+            self.language.get("history.delete")
         )

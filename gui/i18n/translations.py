@@ -81,6 +81,11 @@ TRANSLATIONS = {
         "history.input_files": "Input Files",
         "history.output_files": "Output Files",
         "history.refresh": "Refresh",
+        "history.delete": "Delete Selected",
+        "history.delete_title": "Delete History",
+        "history.delete_confirmation": (
+            "Are you sure you want to delete the selected history record?"
+        ),
 
         "common.not_selected": "Not selected",
         "common.warning": "Warning",
@@ -163,6 +168,9 @@ TRANSLATIONS = {
         "history.input_files": "输入文件",
         "history.output_files": "输出文件",
         "history.refresh": "刷新",
+        "history.delete": "删除选中记录",
+        "history.delete_title": "删除历史记录",
+        "history.delete_confirmation": "确定要删除选中的历史记录吗？",
 
         "common.not_selected": "未选择",
         "common.warning": "警告",
@@ -251,6 +259,10 @@ TRANSLATIONS = {
         "history.input_files": "入力ファイル",
         "history.output_files": "出力ファイル",
         "history.refresh": "更新",
+        "history.delete": "選択した記録を削除",
+        "history.delete_title": "履歴を削除",
+        "history.delete_confirmation": "選択した履歴を削除しますか？",
+
 
         "common.not_selected": "未選択",
         "common.warning": "警告",
