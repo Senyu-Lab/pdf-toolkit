@@ -92,6 +92,9 @@ TRANSLATIONS = {
             "Are you sure you want to clear all history records?"
         ),
 
+        "history.details_title": "Operation Details",
+        "history.error": "Error",
+
         "common.not_selected": "Not selected",
         "common.warning": "Warning",
         "common.error": "Error",
@@ -179,6 +182,9 @@ TRANSLATIONS = {
         "history.clear": "清空历史",
         "history.clear_title": "清空历史记录",
         "history.clear_confirmation": "确定要清空所有历史记录吗？",
+
+        "history.details_title": "操作详情",
+        "history.error": "错误信息",
 
         "common.not_selected": "未选择",
         "common.warning": "警告",
@@ -273,6 +279,9 @@ TRANSLATIONS = {
         "history.clear": "履歴をすべて削除",
         "history.clear_title": "履歴をクリア",
         "history.clear_confirmation": "すべての履歴を削除しますか？",
+
+        "history.details_title": "操作詳細",
+        "history.error": "エラー",
 
         "common.not_selected": "未選択",
         "common.warning": "警告",

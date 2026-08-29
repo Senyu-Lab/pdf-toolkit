@@ -340,3 +340,83 @@ def test_history_widget_clear_empty_history(
 
     assert widget.history_table.rowCount() == 0
     assert repository.get_operations() == []
+
+def test_history_widget_opens_operation_details(
+    qtbot,
+    tmp_path,
+    monkeypatch,
+):
+    database = Database(tmp_path / "test.db")
+    repository = HistoryRepository(database)
+
+    repository.add_operation(
+        operation_type="merge",
+        status="success",
+        input_files=[
+            "a.pdf",
+            "b.pdf",
+        ],
+        output_files=[
+            "merged.pdf",
+        ],
+    )
+
+    widget = HistoryWidget(
+        history_repository=repository,
+    )
+
+    qtbot.addWidget(widget)
+
+    captured_operation = {}
+
+    class FakeDialog:
+        def __init__(
+            self,
+            language,
+            operation,
+            parent,
+        ):
+            captured_operation["language"] = language
+            captured_operation["operation"] = operation
+            captured_operation["parent"] = parent
+
+        def exec(self):
+            captured_operation["opened"] = True
+
+    monkeypatch.setattr(
+        "gui.history_widget.HistoryDetailsDialog",
+        FakeDialog,
+    )
+
+    widget.show_operation_details(0, 1)
+
+    assert captured_operation["opened"] is True
+
+    operation = captured_operation["operation"]
+
+    assert operation["operation_type"] == "merge"
+    assert operation["status"] == "success"
+    assert operation["input_files"] == [
+        "a.pdf",
+        "b.pdf",
+    ]
+    assert operation["output_files"] == [
+        "merged.pdf",
+    ]
+
+    assert (
+        captured_operation["parent"]
+        is widget
+    )
+
+def test_history_widget_ignores_invalid_detail_row(
+    qtbot,
+):
+    widget = HistoryWidget()
+
+    qtbot.addWidget(widget)
+
+    widget.show_operation_details(
+        999,
+        0,
+    )

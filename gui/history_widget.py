@@ -12,6 +12,7 @@ from PySide6.QtWidgets import (
 )
 
 from app.database.repository import HistoryRepository
+from gui.history_details_dialog import HistoryDetailsDialog
 from gui.i18n import LanguageManager
 
 
@@ -52,6 +53,9 @@ class HistoryWidget(QWidget):
         self.history_table.setSelectionMode(
             QAbstractItemView.SelectionMode.SingleSelection
         )
+        self.history_table.cellDoubleClicked.connect(
+            self.show_operation_details
+        )
 
         self.history_table.horizontalHeader().setSectionResizeMode(
             QHeaderView.ResizeMode.Stretch
@@ -88,14 +92,19 @@ class HistoryWidget(QWidget):
 
     def refresh_history(self):
         if self.history_repository is None:
+            self.operations = []
             self.history_table.setRowCount(0)
             return
 
-        operations = self.history_repository.get_operations()
+        self.operations = (
+            self.history_repository.get_operations()
+        )
 
-        self.history_table.setRowCount(len(operations))
+        self.history_table.setRowCount(
+            len(self.operations)
+        )
 
-        for row, operation in enumerate(operations):
+        for row, operation in enumerate(self.operations):
             time_item = QTableWidgetItem(
                 operation["created_at"]
             )
@@ -141,6 +150,23 @@ class HistoryWidget(QWidget):
                 ),
             )
 
+    def show_operation_details(
+            self,
+            row: int,
+            column: int,
+    ):
+        if row < 0 or row >= len(self.operations):
+            return
+
+        operation = self.operations[row]
+
+        dialog = HistoryDetailsDialog(
+            self.language,
+            operation,
+            self,
+        )
+
+        dialog.exec()
 
     def delete_selected_operation(self):
         row = self.history_table.currentRow()
