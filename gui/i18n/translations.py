@@ -86,6 +86,11 @@ TRANSLATIONS = {
         "history.delete_confirmation": (
             "Are you sure you want to delete the selected history record?"
         ),
+        "history.clear": "Clear History",
+        "history.clear_title": "Clear History",
+        "history.clear_confirmation": (
+            "Are you sure you want to clear all history records?"
+        ),
 
         "common.not_selected": "Not selected",
         "common.warning": "Warning",
@@ -171,6 +176,9 @@ TRANSLATIONS = {
         "history.delete": "删除选中记录",
         "history.delete_title": "删除历史记录",
         "history.delete_confirmation": "确定要删除选中的历史记录吗？",
+        "history.clear": "清空历史",
+        "history.clear_title": "清空历史记录",
+        "history.clear_confirmation": "确定要清空所有历史记录吗？",
 
         "common.not_selected": "未选择",
         "common.warning": "警告",
@@ -262,7 +270,9 @@ TRANSLATIONS = {
         "history.delete": "選択した記録を削除",
         "history.delete_title": "履歴を削除",
         "history.delete_confirmation": "選択した履歴を削除しますか？",
-
+        "history.clear": "履歴をすべて削除",
+        "history.clear_title": "履歴をクリア",
+        "history.clear_confirmation": "すべての履歴を削除しますか？",
 
         "common.not_selected": "未選択",
         "common.warning": "警告",

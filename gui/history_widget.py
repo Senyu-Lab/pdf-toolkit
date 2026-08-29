@@ -69,11 +69,18 @@ class HistoryWidget(QWidget):
             self.delete_selected_operation
         )
 
+        self.clear_button = QPushButton()
+        self.clear_button.setObjectName("secondaryButton")
+        self.clear_button.clicked.connect(
+            self.clear_history
+        )
+
         layout.addWidget(self.title_label)
         layout.addWidget(self.description_label)
         layout.addWidget(self.history_table)
         layout.addWidget(self.refresh_button)
         layout.addWidget(self.delete_button)
+        layout.addWidget(self.clear_button)
 
         self.setLayout(layout)
 
@@ -134,6 +141,7 @@ class HistoryWidget(QWidget):
                 ),
             )
 
+
     def delete_selected_operation(self):
         row = self.history_table.currentRow()
 
@@ -170,6 +178,30 @@ class HistoryWidget(QWidget):
 
         self.refresh_history()
 
+    def clear_history(self):
+        result = QMessageBox.question(
+            self,
+            self.language.get(
+                "history.clear_title"
+            ),
+            self.language.get(
+                "history.clear_confirmation"
+            ),
+            QMessageBox.StandardButton.Yes
+            | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+
+        if result != QMessageBox.StandardButton.Yes:
+            return
+
+        if self.history_repository is None:
+            return
+
+        self.history_repository.clear_operations()
+
+        self.refresh_history()
+
     def refresh_ui(self):
         self.title_label.setText(
             self.language.get("history.title")
@@ -195,4 +227,8 @@ class HistoryWidget(QWidget):
 
         self.delete_button.setText(
             self.language.get("history.delete")
+        )
+
+        self.clear_button.setText(
+            self.language.get("history.clear")
         )

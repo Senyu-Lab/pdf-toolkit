@@ -235,3 +235,108 @@ def test_history_widget_cancel_delete(
     operations = repository.get_operations()
 
     assert len(operations) == 1
+
+def test_history_widget_clears_history(
+    qtbot,
+    tmp_path,
+    monkeypatch,
+):
+    database = Database(tmp_path / "test.db")
+    repository = HistoryRepository(database)
+
+    repository.add_operation(
+        operation_type="merge",
+        status="success",
+        input_files=["a.pdf"],
+        output_files=["merged.pdf"],
+    )
+
+    repository.add_operation(
+        operation_type="split",
+        status="success",
+        input_files=["input.pdf"],
+        output_files=["input_1.pdf"],
+    )
+
+    widget = HistoryWidget(
+        history_repository=repository,
+    )
+
+    qtbot.addWidget(widget)
+
+    assert widget.history_table.rowCount() == 2
+
+    monkeypatch.setattr(
+        QMessageBox,
+        "question",
+        lambda *args, **kwargs: (
+            QMessageBox.StandardButton.Yes
+        ),
+    )
+
+    widget.clear_history()
+
+    assert widget.history_table.rowCount() == 0
+
+    assert repository.get_operations() == []
+
+def test_history_widget_cancel_clear_history(
+    qtbot,
+    tmp_path,
+    monkeypatch,
+):
+    database = Database(tmp_path / "test.db")
+    repository = HistoryRepository(database)
+
+    repository.add_operation(
+        operation_type="merge",
+        status="success",
+        input_files=["a.pdf"],
+        output_files=["merged.pdf"],
+    )
+
+    widget = HistoryWidget(
+        history_repository=repository,
+    )
+
+    qtbot.addWidget(widget)
+
+    monkeypatch.setattr(
+        QMessageBox,
+        "question",
+        lambda *args, **kwargs: (
+            QMessageBox.StandardButton.No
+        ),
+    )
+
+    widget.clear_history()
+
+    assert widget.history_table.rowCount() == 1
+    assert len(repository.get_operations()) == 1
+
+def test_history_widget_clear_empty_history(
+    qtbot,
+    tmp_path,
+    monkeypatch,
+):
+    database = Database(tmp_path / "test.db")
+    repository = HistoryRepository(database)
+
+    widget = HistoryWidget(
+        history_repository=repository,
+    )
+
+    qtbot.addWidget(widget)
+
+    monkeypatch.setattr(
+        QMessageBox,
+        "question",
+        lambda *args, **kwargs: (
+            QMessageBox.StandardButton.Yes
+        ),
+    )
+
+    widget.clear_history()
+
+    assert widget.history_table.rowCount() == 0
+    assert repository.get_operations() == []
