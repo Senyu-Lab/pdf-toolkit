@@ -15,6 +15,10 @@ PDF Toolkit provides both a command-line interface (CLI) and a graphical user in
 * Validate user input and page ranges
 * Drag and drop PDF files
 * Reorder PDF files by drag and drop when merging
+* Persistent operation history with SQLite
+* View operation details
+* Delete selected history records
+* Clear operation history
 * Command-line interface (CLI)
 * Graphical user interface (GUI) built with PySide6
 * Multilingual GUI support
@@ -73,6 +77,7 @@ The GUI currently provides the following operations:
 * Merge PDF
 * Split PDF
 * Delete PDF pages
+* Operation History
 
 The GUI also supports PDF file drag and drop.
 
@@ -100,26 +105,34 @@ The language manager provides a centralized way to manage translated interface t
 
 Additional languages can be added by extending the translation resources without changing the core PDF processing logic.
 
-## Database
+## Database and Operation History
 
-The project uses SQLite for local data persistence and is currently
-developing the foundation for operation history.
+PDF Toolkit uses SQLite for local persistence of PDF operation history.
 
-The database layer is separated from the GUI and PDF processing logic.
-SQL statements are maintained separately from Python code to keep the
-database layer modular and maintainable.
+The database layer is separated from the GUI and PDF processing logic. SQL statements are maintained separately from Python code to keep the database layer modular and maintainable.
 
-The current database layer provides:
+The history system records PDF operations such as Merge and Split, including their status, input files, output files, and error information when applicable.
 
-- SQLite database initialization
-- Database connection management
-- Operation history repository
-- Insert operations
-- Query operations
-- Delete operations
-- Clear operations
-- Input validation
-- Automated database tests
+The History interface provides:
+
+* View operation history
+* Refresh history
+* Delete selected records
+* Clear all history
+* View detailed operation information
+* Track successful and failed operations
+
+The database layer provides:
+
+* SQLite database initialization
+* Database connection management
+* Operation history repository
+* Insert operations
+* Query operations
+* Delete operations
+* Clear operations
+* Input validation
+* Automated database tests
 
 ## Windows Executable
 
@@ -129,9 +142,11 @@ A pre-built Windows x64 executable is available from the GitHub Releases page.
 
 Download the latest release:
 
-**v1.1.0**
+```text
+v1.2.0
+```
 
-Download:
+The Windows release package will be provided as:
 
 ```text
 PDF-Toolkit-Windows-x64.zip
@@ -169,6 +184,8 @@ The order of PDF files can also be changed by dragging them within the list.
 
 Duplicate PDF files are automatically prevented.
 
+Successful and failed Merge operations are recorded in the operation history.
+
 ## Split PDF
 
 Select:
@@ -187,11 +204,13 @@ The program will generate:
 
 ```text
 output/
-  pages_2-5.pdf
-  pages_8-10.pdf
+├── pages_2-5.pdf
+└── pages_8-10.pdf
 ```
 
 The GUI also supports dragging a PDF file directly into the Split PDF interface.
+
+Successful and failed Split operations are recorded in the operation history.
 
 ## Delete Pages
 
@@ -225,12 +244,39 @@ and generate:
 
 ```text
 output/
-  modified.pdf
+└── modified.pdf
 ```
 
 The program validates the page ranges and prevents deleting all pages from the PDF.
 
 If the output file already exists, the program will ask for confirmation before overwriting it.
+
+## Operation History
+
+The History interface allows users to review previously completed PDF operations.
+
+Each history record can include:
+
+* Operation type
+* Status
+* Creation time
+* Input files
+* Output files
+* Error information
+
+### Delete Selected
+
+Select a history record and choose **Delete Selected** to remove that record from the database.
+
+### Clear History
+
+Choose **Clear History** to remove all stored operation records after confirmation.
+
+### Operation Details
+
+Double-click a history record to open the operation details dialog.
+
+The details dialog displays the complete information associated with the selected operation, including input files, output files, status, and error information when available.
 
 ## Testing
 
@@ -244,25 +290,27 @@ The project uses `pytest` and `pytest-qt` for automated testing.
 
 The test suite covers:
 
-- PDF merging
-- PDF splitting
-- Page deletion
-- Page range validation
-- File utilities
-- CLI behavior
-- GUI functionality
-- Drag and drop functionality
-- Multilingual GUI components
-- User settings
-- Database initialization
-- SQLite schema
-- Operation history repository
-- Input validation
+* PDF merging
+* PDF splitting
+* Page deletion
+* Page range validation
+* File utilities
+* CLI behavior
+* GUI functionality
+* Drag and drop functionality
+* Multilingual GUI components
+* User settings
+* Database initialization
+* SQLite schema
+* Operation history repository
+* HistoryWidget
+* History details dialog
+* Input validation
 
-The current `v1.1.0` test suite passes:
+The current `v1.2.0` test suite passes:
 
 ```text
-87 passed
+126 passed
 ```
 
 ## Code Quality
@@ -313,22 +361,27 @@ This ensures that the Windows executable is built from a tested version of the p
 
 ## Current Version
 
-**v1.1.0**
+v1.2.0
 
-### v1.1.0 Highlights
+### v1.2.0 Highlights
 
-* Added multilingual GUI support
-* Added English, Chinese, and Japanese translations
-* Added PDF drag-and-drop support
-* Added drag-and-drop PDF reordering for merging
-* Added Windows x64 executable build
-* Added automated Windows executable packaging with GitHub Actions
-* Expanded automated test coverage
-* 87 tests currently passing
+* Added SQLite-based persistent operation history
+* Added operation history management
+* Added history refresh functionality
+* Added selected history record deletion
+* Added clear history functionality
+* Added operation details dialog
+* Added history records for Merge and Split operations
+* Added success and failure status tracking
+* Added error information to operation history
+* Added automated tests for database and history functionality
+* Expanded automated test coverage to 126 passing tests
 
 ## License
 
-This project is for learning and personal development.
+This project is licensed under the MIT License.
+
+See the `LICENSE` file for details.
 
 ## Author
 
