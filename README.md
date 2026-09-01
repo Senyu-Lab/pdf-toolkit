@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/Senyu-Lab/pdf-toolkit/actions/workflows/ci.yml/badge.svg)](https://github.com/Senyu-Lab/pdf-toolkit/actions/workflows/ci.yml)
 
+[English](README.md) | [简体中文](README.zh-CN.md)
+
 A simple Python tool for merging, splitting, and editing PDF files.
 
 PDF Toolkit provides both a command-line interface (CLI) and a graphical user interface (GUI) built with PySide6.
