@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QDragEnterEvent, QDropEvent
 from PySide6.QtWidgets import (
     QFileDialog,
@@ -95,10 +95,12 @@ class PdfListWidget(QListWidget):
 
 
 class MergeWidget(QWidget):
+    pdf_selected = Signal(object)
+
     def __init__(
-            self,
-            language_manager: LanguageManager | None = None,
-            history_repository: HistoryRepository | None = None,
+        self,
+        language_manager: LanguageManager | None = None,
+        history_repository: HistoryRepository | None = None,
     ):
         super().__init__()
 
@@ -114,6 +116,8 @@ class MergeWidget(QWidget):
         self.pdf_files.clear()
         self.file_list.clear()
 
+        self.pdf_selected.emit(None)
+
     def setup_ui(self):
         layout = QVBoxLayout()
 
@@ -123,6 +127,11 @@ class MergeWidget(QWidget):
         layout.addWidget(self.title_label)
 
         self.file_list = PdfListWidget(self)
+
+        self.file_list.currentItemChanged.connect(
+            self._on_file_selected
+        )
+
         layout.addWidget(self.file_list)
 
         button_layout = QHBoxLayout()
@@ -182,8 +191,19 @@ class MergeWidget(QWidget):
 
         self.setLayout(layout)
 
-    def add_pdf(self):
+    def _on_file_selected(self, current, previous):
+        if current is None:
+            self.pdf_selected.emit(None)
+            return
 
+        path = current.data(Qt.ItemDataRole.UserRole)
+
+        if path is None:
+            return
+
+        self.pdf_selected.emit(Path(path))
+
+    def add_pdf(self):
         files, _ = QFileDialog.getOpenFileNames(
             self,
             self.language.get("merge.choose_pdf"),
@@ -204,6 +224,9 @@ class MergeWidget(QWidget):
             if path not in self.pdf_files:
                 self.pdf_files.append(path)
                 self.add_list_item(path)
+
+        if self.file_list.currentItem() is None:
+            self.file_list.setCurrentRow(0)
 
     def add_dropped_files(self, urls):
 
@@ -232,9 +255,11 @@ class MergeWidget(QWidget):
         ]
 
     def add_list_item(self, path: Path):
-
         item = QListWidgetItem(path.name)
-        item.setData(Qt.ItemDataRole.UserRole, str(path))
+        item.setData(
+            Qt.ItemDataRole.UserRole,
+            str(path),
+        )
 
         self.file_list.addItem(item)
 
@@ -247,6 +272,9 @@ class MergeWidget(QWidget):
 
         self.file_list.takeItem(row)
         self.pdf_files.pop(row)
+
+        if self.file_list.count() == 0:
+            self.pdf_selected.emit(None)
 
     def move_up(self):
 
@@ -320,14 +348,20 @@ class MergeWidget(QWidget):
 
         try:
             # Reuse the existing PDF processing logic.
-            merge_pdfs(self.pdf_files, self.output_file)
+            merge_pdfs(
+                self.pdf_files,
+                self.output_file,
+            )
 
         except Exception as exc:
             if self.history_repository is not None:
                 self.history_repository.add_operation(
                     operation_type="merge",
                     status="failed",
-                    input_files=[str(path) for path in self.pdf_files],
+                    input_files=[
+                        str(path)
+                        for path in self.pdf_files
+                    ],
                     output_files=[],
                     error_message=str(exc),
                 )
@@ -343,7 +377,10 @@ class MergeWidget(QWidget):
             self.history_repository.add_operation(
                 operation_type="merge",
                 status="success",
-                input_files=[str(path) for path in self.pdf_files],
+                input_files=[
+                    str(path)
+                    for path in self.pdf_files
+                ],
                 output_files=[str(self.output_file)],
             )
 

@@ -1,9 +1,13 @@
+from pathlib import Path
+
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QApplication,
     QComboBox,
     QHBoxLayout,
     QMainWindow,
     QPushButton,
+    QSplitter,
     QStackedWidget,
     QStatusBar,
     QVBoxLayout,
@@ -16,6 +20,7 @@ from gui.delete_widget import DeleteWidget
 from gui.history_widget import HistoryWidget
 from gui.i18n import LanguageManager
 from gui.merge_widget import MergeWidget
+from gui.pdf_preview_widget import PdfPreviewWidget
 from gui.settings import AppSettings
 from gui.split_widget import SplitWidget
 from gui.styles import APP_STYLE
@@ -23,8 +28,8 @@ from gui.styles import APP_STYLE
 
 class MainWindow(QMainWindow):
     def __init__(
-            self,
-            settings: AppSettings | None = None,
+        self,
+        settings: AppSettings | None = None,
     ):
         super().__init__()
 
@@ -43,7 +48,9 @@ class MainWindow(QMainWindow):
         self.language = LanguageManager(language)
 
         # Refresh the UI whenever the language changes.
-        self.language.language_changed.connect(self.refresh_ui)
+        self.language.language_changed.connect(
+            self.refresh_ui
+        )
 
         self.setup_ui()
         self.restore_window_state()
@@ -70,16 +77,18 @@ class MainWindow(QMainWindow):
             self._on_page_changed
         )
 
-
-        # Share the same language manager and history repository with every page.
+        # Share the same language manager and history
+        # repository with every page.
         self.merge_widget = MergeWidget(
             self.language,
             self.history_repository,
         )
+
         self.split_widget = SplitWidget(
             self.language,
             self.history_repository,
         )
+
         self.delete_widget = DeleteWidget(
             self.language,
             self.history_repository,
@@ -95,12 +104,28 @@ class MainWindow(QMainWindow):
         self.pages.addWidget(self.delete_widget)
         self.pages.addWidget(self.history_widget)
 
+        self.preview_widget = PdfPreviewWidget(
+            self.language,
+        )
+
+        self.merge_widget.pdf_selected.connect(
+            self.show_pdf_preview
+        )
+
         # Language selector.
         self.language_selector = QComboBox()
-
-        self.language_selector.addItem("English", "en")
-        self.language_selector.addItem("中文", "zh")
-        self.language_selector.addItem("日本語", "ja")
+        self.language_selector.addItem(
+            "English",
+            "en",
+        )
+        self.language_selector.addItem(
+            "中文",
+            "zh",
+        )
+        self.language_selector.addItem(
+            "日本語",
+            "ja",
+        )
 
         self.language_selector.currentIndexChanged.connect(
             self.change_language
@@ -111,10 +136,27 @@ class MainWindow(QMainWindow):
         )
 
         if index >= 0:
-            self.language_selector.setCurrentIndex(index)
+            self.language_selector.setCurrentIndex(
+                index
+            )
 
         main_layout.addLayout(navigation_layout)
-        main_layout.addWidget(self.pages)
+
+        content_splitter = QSplitter(
+            Qt.Orientation.Horizontal
+        )
+
+        content_splitter.addWidget(self.pages)
+        content_splitter.addWidget(
+            self.preview_widget
+        )
+
+        content_splitter.setStretchFactor(0, 3)
+        content_splitter.setStretchFactor(1, 2)
+
+        main_layout.addWidget(content_splitter)
+
+        self.preview_widget.hide()
 
         self.setCentralWidget(central_widget)
 
@@ -130,19 +172,30 @@ class MainWindow(QMainWindow):
         self.merge_button.clicked.connect(
             self.show_merge_page
         )
+
         self.split_button.clicked.connect(
             self.show_split_page
         )
+
         self.delete_button.clicked.connect(
             self.show_delete_page
         )
+
         self.history_button.clicked.connect(
             self.show_history_page
         )
 
-
         self.refresh_ui()
         self.show_merge_page()
+
+    def show_pdf_preview(self, path):
+        if path is None:
+            self.preview_widget.close_document()
+            self.preview_widget.hide()
+            return
+
+        self.preview_widget.show()
+        self.preview_widget.load_pdf(path)
 
     def change_language(self, index: int):
         language = self.language_selector.itemData(index)
@@ -153,7 +206,10 @@ class MainWindow(QMainWindow):
         self.language.set_language(language)
         self.settings.save_language(language)
 
-    def refresh_ui(self, language: str | None = None):
+    def refresh_ui(
+        self,
+        language: str | None = None,
+    ):
 
         self.setWindowTitle(
             self.language.get("app.title")
@@ -180,6 +236,7 @@ class MainWindow(QMainWindow):
         self.split_widget.refresh_ui()
         self.delete_widget.refresh_ui()
         self.history_widget.refresh_ui()
+        self.preview_widget.refresh_ui()
 
     def show_merge_page(self):
         self.pages.setCurrentWidget(
@@ -212,15 +269,17 @@ class MainWindow(QMainWindow):
             self.saveGeometry()
         )
 
+        self.preview_widget.close_document()
+
         event.accept()
 
     def _on_page_changed(self, index: int):
         if self.pages.widget(index) is self.history_widget:
             self.history_widget.refresh_history()
 
+
 def main():
     app = QApplication([])
-
     window = MainWindow()
     window.show()
 
