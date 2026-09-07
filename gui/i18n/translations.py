@@ -95,6 +95,14 @@ TRANSLATIONS = {
         "history.details_title": "Operation Details",
         "history.error": "Error",
 
+        "preview.title": "PDF Preview",
+        "preview.previous": "Previous",
+        "preview.next": "Next",
+        "preview.zoom_out": "Zoom Out",
+        "preview.zoom_in": "Zoom In",
+        "preview.fit": "Fit",
+        "preview.no_file": "No PDF selected",
+
         "common.not_selected": "Not selected",
         "common.warning": "Warning",
         "common.error": "Error",
@@ -185,6 +193,14 @@ TRANSLATIONS = {
 
         "history.details_title": "操作详情",
         "history.error": "错误信息",
+
+        "preview.title": "PDF 预览",
+        "preview.previous": "上一页",
+        "preview.next": "下一页",
+        "preview.zoom_out": "缩小",
+        "preview.zoom_in": "放大",
+        "preview.fit": "适应窗口",
+        "preview.no_file": "未选择 PDF",
 
         "common.not_selected": "未选择",
         "common.warning": "警告",
@@ -282,6 +298,14 @@ TRANSLATIONS = {
 
         "history.details_title": "操作詳細",
         "history.error": "エラー",
+
+        "preview.title": "PDF プレビュー",
+        "preview.previous": "前のページ",
+        "preview.next": "次のページ",
+        "preview.zoom_out": "縮小",
+        "preview.zoom_in": "拡大",
+        "preview.fit": "ウィンドウに合わせる",
+        "preview.no_file": "PDF が選択されていません",
 
         "common.not_selected": "未選択",
         "common.warning": "警告",

@@ -10,7 +10,12 @@ a = Analysis(
     [str(PROJECT_ROOT / "gui_main.py")],
     pathex=[str(PROJECT_ROOT)],
     binaries=[],
-    datas=[],
+    datas=[
+        (
+            str(PROJECT_ROOT / "app" / "database" / "sql"),
+            "app/database/sql",
+        ),
+    ],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -51,3 +56,4 @@ coll = COLLECT(
     upx_exclude=[],
     name="PDF-Toolkit",
 )
+
