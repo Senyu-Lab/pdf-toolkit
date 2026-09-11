@@ -109,6 +109,9 @@ class MainWindow(QMainWindow):
         self.merge_widget.pdf_selected.connect(
             self.show_pdf_preview
         )
+        self.split_widget.pdf_selected.connect(
+            self.show_pdf_preview
+        )
 
         # Language selector.
         self.language_selector = QComboBox()

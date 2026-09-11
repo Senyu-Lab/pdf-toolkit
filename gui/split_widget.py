@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from PySide6.QtCore import Signal
 from PySide6.QtGui import QDragEnterEvent, QDropEvent
 from PySide6.QtWidgets import (
     QFileDialog,
@@ -22,10 +23,12 @@ from gui.i18n import LanguageManager
 
 
 class SplitWidget(QWidget):
+    pdf_selected = Signal(object)
+
     def __init__(
-            self,
-            language_manager: LanguageManager | None = None,
-            history_repository: HistoryRepository | None = None,
+        self,
+        language_manager: LanguageManager | None = None,
+        history_repository: HistoryRepository | None = None,
     ):
         super().__init__()
 
@@ -42,22 +45,21 @@ class SplitWidget(QWidget):
         self.setup_ui()
 
     def set_input_file(self, path: Path):
-
         self.input_file = path
         self.input_label.setText(
             f"{self.language.get('split.input_prefix')}: "
             f"{path.name}"
         )
 
-    def add_dropped_file(self, path: Path):
+        self.pdf_selected.emit(path)
 
+    def add_dropped_file(self, path: Path):
         if path.suffix.lower() != ".pdf":
             return
 
         self.set_input_file(path)
 
     def _has_pdf_files(self, event) -> bool:
-
         if not event.mimeData().hasUrls():
             return False
 
@@ -82,7 +84,6 @@ class SplitWidget(QWidget):
             event.ignore()
 
     def dropEvent(self, event: QDropEvent):
-
         if not event.mimeData().hasUrls():
             event.ignore()
             return
@@ -189,7 +190,6 @@ class SplitWidget(QWidget):
         self.setLayout(layout)
 
     def choose_pdf(self):
-
         file, _ = QFileDialog.getOpenFileName(
             self,
             self.language.get("split.choose_pdf"),
@@ -203,7 +203,6 @@ class SplitWidget(QWidget):
         self.set_input_file(Path(file))
 
     def choose_output(self):
-
         directory = QFileDialog.getExistingDirectory(
             self,
             self.language.get("split.choose_output"),
@@ -220,7 +219,6 @@ class SplitWidget(QWidget):
         )
 
     def split_file(self):
-
         if self.input_file is None:
             QMessageBox.warning(
                 self,
@@ -252,6 +250,7 @@ class SplitWidget(QWidget):
             page_ranges = self.parse_page_ranges(
                 page_range_text
             )
+
             page_count = get_page_count(
                 self.input_file
             )
@@ -274,7 +273,10 @@ class SplitWidget(QWidget):
                     operation_type="split",
                     status="success",
                     input_files=[str(self.input_file)],
-                    output_files=[str(path) for path in output_files],
+                    output_files=[
+                        str(path)
+                        for path in output_files
+                    ],
                 )
 
         except ValueError as exc:
@@ -314,7 +316,6 @@ class SplitWidget(QWidget):
     def parse_page_ranges(
         text: str,
     ) -> list[tuple[int, int]]:
-
         ranges = []
 
         # Convert inputs such as "1-3, 5, 7-9".
@@ -343,7 +344,6 @@ class SplitWidget(QWidget):
         return ranges
 
     def refresh_ui(self):
-
         self.title_label.setText(
             self.language.get("split.title")
         )
