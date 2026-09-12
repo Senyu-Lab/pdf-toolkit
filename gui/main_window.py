@@ -31,7 +31,7 @@ class MainWindow(QMainWindow):
     ):
         super().__init__()
 
-        self.resize(900, 600)
+        self.resize(1200, 700)
 
         self.setStyleSheet(APP_STYLE)
 
@@ -156,7 +156,7 @@ class MainWindow(QMainWindow):
         )
 
         content_splitter.setStretchFactor(0, 3)
-        content_splitter.setStretchFactor(1, 2)
+        content_splitter.setStretchFactor(1, 3)
 
         main_layout.addWidget(content_splitter)
 
