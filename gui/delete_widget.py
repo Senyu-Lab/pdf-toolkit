@@ -1,5 +1,6 @@
 from pathlib import Path
 
+from PySide6.QtCore import Signal
 from PySide6.QtGui import QDragEnterEvent, QDropEvent
 from PySide6.QtWidgets import (
     QFileDialog,
@@ -22,6 +23,8 @@ from gui.i18n import LanguageManager
 
 
 class DeleteWidget(QWidget):
+    pdf_selected = Signal(object)
+
     def __init__(
             self,
             language_manager: LanguageManager | None = None,
@@ -33,7 +36,6 @@ class DeleteWidget(QWidget):
 
         self.language = language_manager or LanguageManager("en")
         self.history_repository = history_repository
-
         self.input_file: Path | None = None
         self.output_file: Path | None = None
 
@@ -50,12 +52,13 @@ class DeleteWidget(QWidget):
         self.set_input_file(path)
 
     def set_input_file(self, path: Path):
-
         self.input_file = path
         self.input_label.setText(
             f"{self.language.get('delete.input_prefix')}: "
             f"{path.name}"
         )
+
+        self.pdf_selected.emit(path)
 
     def _has_pdf_files(self, event) -> bool:
 
@@ -83,7 +86,6 @@ class DeleteWidget(QWidget):
             event.ignore()
 
     def dropEvent(self, event: QDropEvent):
-
         if not event.mimeData().hasUrls():
             event.ignore()
             return
@@ -190,7 +192,6 @@ class DeleteWidget(QWidget):
         self.setLayout(layout)
 
     def choose_pdf(self):
-
         file, _ = QFileDialog.getOpenFileName(
             self,
             self.language.get("delete.choose_pdf"),
@@ -289,9 +290,7 @@ class DeleteWidget(QWidget):
             )
             return
 
-
         except Exception as exc:
-
             if self.history_repository is not None:
                 self.history_repository.add_operation(
                     operation_type="delete",
@@ -306,7 +305,6 @@ class DeleteWidget(QWidget):
                 self.language.get("delete.failed"),
                 str(exc),
             )
-
             return
 
         QMessageBox.information(
@@ -348,7 +346,6 @@ class DeleteWidget(QWidget):
         return ranges
 
     def refresh_ui(self):
-
         self.title_label.setText(
             self.language.get("delete.title")
         )
