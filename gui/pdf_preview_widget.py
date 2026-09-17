@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import fitz
-from PySide6.QtCore import Qt
+from PySide6.QtCore import QTimer, Qt
 from PySide6.QtGui import QImage, QPixmap
 from PySide6.QtWidgets import (
     QHBoxLayout,
@@ -122,10 +122,9 @@ class PdfPreviewWidget(QWidget):
         self.file_path = path
         self.current_page = 0
         self.zoom_factor = 1.0
-
         self.file_label.setText(path.name)
 
-        self.render_page()
+        QTimer.singleShot(0, self.fit_to_window)
 
     def close_document(self):
         if self.document is not None:
