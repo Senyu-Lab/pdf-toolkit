@@ -124,6 +124,7 @@ class PdfPreviewWidget(QWidget):
         self.zoom_factor = 1.0
         self.file_label.setText(path.name)
 
+        self.render_page()
         QTimer.singleShot(0, self.fit_to_window)
 
     def close_document(self):
