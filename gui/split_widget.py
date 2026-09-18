@@ -14,11 +14,7 @@ from PySide6.QtWidgets import (
 )
 
 from app.database.repository import HistoryRepository
-from app.splitter import (
-    get_page_count,
-    split_pdf,
-    validate_page_ranges,
-)
+from app.splitter import get_page_count, split_pdf, validate_page_ranges
 from gui.i18n import LanguageManager
 
 
@@ -32,23 +28,34 @@ class SplitWidget(QWidget):
     ):
         super().__init__()
 
-        # Use the shared language manager or English for standalone tests.
         self.language = language_manager or LanguageManager("en")
         self.history_repository = history_repository
 
         self.input_file: Path | None = None
         self.output_dir: Path | None = None
+        self.page_count: int | None = None
 
-        # Allow PDF files to be dragged into the widget.
         self.setAcceptDrops(True)
 
         self.setup_ui()
 
     def set_input_file(self, path: Path):
         self.input_file = path
+
+        try:
+            self.page_count = get_page_count(path)
+        except Exception:
+            self.page_count = None
+
         self.input_label.setText(
             f"{self.language.get('split.input_prefix')}: "
             f"{path.name}"
+        )
+
+        self.page_count_label.setText(
+            self.language.get("split.page_count").format(
+                count=self.page_count or 0
+            )
         )
 
         self.pdf_selected.emit(path)
@@ -98,8 +105,6 @@ class SplitWidget(QWidget):
                 continue
 
             self.add_dropped_file(path)
-
-            # Split only requires one input PDF.
             break
 
         event.acceptProposedAction()
@@ -142,6 +147,13 @@ class SplitWidget(QWidget):
         input_layout.addWidget(self.input_button)
 
         layout.addLayout(input_layout)
+
+        self.page_count_label = QLabel(
+            self.language.get("split.page_count").format(
+                count=0
+            )
+        )
+        layout.addWidget(self.page_count_label)
 
         self.range_title = QLabel(
             self.language.get("split.page_ranges")
@@ -246,22 +258,15 @@ class SplitWidget(QWidget):
             return
 
         try:
-            # Convert the user's input into page range tuples.
-            page_ranges = self.parse_page_ranges(
-                page_range_text
-            )
+            page_ranges = self.parse_page_ranges(page_range_text)
 
-            page_count = get_page_count(
-                self.input_file
-            )
+            page_count = get_page_count(self.input_file)
 
-            # Validate ranges before modifying the PDF.
             validate_page_ranges(
                 page_ranges,
                 page_count,
             )
 
-            # Reuse the existing PDF splitting logic.
             output_files = split_pdf(
                 self.input_file,
                 self.output_dir,
@@ -274,8 +279,7 @@ class SplitWidget(QWidget):
                     status="success",
                     input_files=[str(self.input_file)],
                     output_files=[
-                        str(path)
-                        for path in output_files
+                        str(path) for path in output_files
                     ],
                 )
 
@@ -380,16 +384,25 @@ class SplitWidget(QWidget):
             self.language.get("split.split_pdf")
         )
 
-        # Keep the currently selected path unchanged.
         if self.input_file is None:
             self.input_label.setText(
                 f"{self.language.get('split.input_prefix')}: "
                 f"{self.language.get('common.not_selected')}"
             )
+            self.page_count_label.setText(
+                self.language.get("split.page_count").format(
+                    count=0
+                )
+            )
         else:
             self.input_label.setText(
                 f"{self.language.get('split.input_prefix')}: "
                 f"{self.input_file.name}"
+            )
+            self.page_count_label.setText(
+                self.language.get("split.page_count").format(
+                    count=self.page_count or 0
+                )
             )
 
         if self.output_dir is None:

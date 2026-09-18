@@ -15,10 +15,7 @@ from PySide6.QtWidgets import (
 
 from app.database.repository import HistoryRepository
 from app.page_manager import delete_pages
-from app.splitter import (
-    get_page_count,
-    validate_page_ranges,
-)
+from app.splitter import get_page_count, validate_page_ranges
 from gui.i18n import LanguageManager
 
 
@@ -26,42 +23,51 @@ class DeleteWidget(QWidget):
     pdf_selected = Signal(object)
 
     def __init__(
-            self,
-            language_manager: LanguageManager | None = None,
-            history_repository: HistoryRepository | None = None,
+        self,
+        language_manager: LanguageManager | None = None,
+        history_repository: HistoryRepository | None = None,
     ):
         super().__init__()
 
-        # Use the shared language manager or English for standalone tests.
-
         self.language = language_manager or LanguageManager("en")
         self.history_repository = history_repository
+
         self.input_file: Path | None = None
         self.output_file: Path | None = None
+        self.page_count: int | None = None
 
-        # Allow PDF files to be dragged into the widget.
         self.setAcceptDrops(True)
 
         self.setup_ui()
 
-    def add_dropped_file(self, path: Path):
-
-        if path.suffix.lower() != ".pdf":
-            return
-
-        self.set_input_file(path)
-
     def set_input_file(self, path: Path):
         self.input_file = path
+
+        try:
+            self.page_count = get_page_count(path)
+        except Exception:
+            self.page_count = None
+
         self.input_label.setText(
             f"{self.language.get('delete.input_prefix')}: "
             f"{path.name}"
         )
 
+        self.page_count_label.setText(
+            self.language.get("delete.page_count").format(
+                count=self.page_count or 0
+            )
+        )
+
         self.pdf_selected.emit(path)
 
-    def _has_pdf_files(self, event) -> bool:
+    def add_dropped_file(self, path: Path):
+        if path.suffix.lower() != ".pdf":
+            return
 
+        self.set_input_file(path)
+
+    def _has_pdf_files(self, event) -> bool:
         if not event.mimeData().hasUrls():
             return False
 
@@ -100,8 +106,6 @@ class DeleteWidget(QWidget):
                 continue
 
             self.add_dropped_file(path)
-
-            # Delete only needs one input PDF.
             break
 
         event.acceptProposedAction()
@@ -144,6 +148,13 @@ class DeleteWidget(QWidget):
         input_layout.addWidget(self.input_button)
 
         layout.addLayout(input_layout)
+
+        self.page_count_label = QLabel(
+            self.language.get("delete.page_count").format(
+                count=0
+            )
+        )
+        layout.addWidget(self.page_count_label)
 
         self.pages_title = QLabel(
             self.language.get("delete.pages_to_delete")
@@ -205,7 +216,6 @@ class DeleteWidget(QWidget):
         self.set_input_file(Path(file))
 
     def choose_output(self):
-
         file, _ = QFileDialog.getSaveFileName(
             self,
             self.language.get("delete.choose_output"),
@@ -224,7 +234,6 @@ class DeleteWidget(QWidget):
         )
 
     def delete_file(self):
-
         if self.input_file is None:
             QMessageBox.warning(
                 self,
@@ -252,7 +261,6 @@ class DeleteWidget(QWidget):
             return
 
         try:
-            # Convert the user's input into page range tuples.
             page_ranges = self.parse_page_ranges(
                 page_range_text
             )
@@ -261,13 +269,11 @@ class DeleteWidget(QWidget):
                 self.input_file
             )
 
-            # Validate ranges before modifying the PDF.
             validate_page_ranges(
                 page_ranges,
                 page_count,
             )
 
-            # Reuse the existing page deletion logic.
             delete_pages(
                 self.input_file,
                 self.output_file,
@@ -317,7 +323,6 @@ class DeleteWidget(QWidget):
     def parse_page_ranges(
         text: str,
     ) -> list[tuple[int, int]]:
-
         ranges = []
 
         # Convert inputs such as "2, 5-7, 10".
@@ -387,10 +392,20 @@ class DeleteWidget(QWidget):
                 f"{self.language.get('delete.input_prefix')}: "
                 f"{self.language.get('common.not_selected')}"
             )
+            self.page_count_label.setText(
+                self.language.get("delete.page_count").format(
+                    count=0
+                )
+            )
         else:
             self.input_label.setText(
                 f"{self.language.get('delete.input_prefix')}: "
                 f"{self.input_file.name}"
+            )
+            self.page_count_label.setText(
+                self.language.get("delete.page_count").format(
+                    count=self.page_count or 0
+                )
             )
 
         if self.output_file is None:
