@@ -46,6 +46,7 @@ TRANSLATIONS = {
         "split.invalid_input": "Invalid input",
         "split.failed": "Split failed",
         "split.success": "PDF split successfully into {count} file(s).",
+        "split.page_count": "Pages: {count}",
 
         "delete.title": "Delete Pages",
         "delete.choose_pdf": "Choose PDF",
@@ -71,6 +72,7 @@ TRANSLATIONS = {
         "delete.invalid_input": "Invalid input",
         "delete.failed": "Delete failed",
         "delete.success": "Pages deleted successfully.",
+        "delete.page_count": "Pages: {count}",
 
         "history.title": "History",
         "navigation.history": "History",
@@ -153,6 +155,7 @@ TRANSLATIONS = {
         "split.invalid_input": "输入无效",
         "split.failed": "拆分失败",
         "split.success": "PDF 已成功拆分为 {count} 个文件。",
+        "split.page_count": "页数：{count}",
 
         "delete.title": "删除页面",
         "delete.choose_pdf": "选择 PDF",
@@ -174,6 +177,7 @@ TRANSLATIONS = {
         "delete.invalid_input": "输入无效",
         "delete.failed": "删除失败",
         "delete.success": "页面删除成功。",
+        "delete.page_count": "页数：{count}",
 
         "history.title": "操作历史",
         "navigation.history": "操作历史",
@@ -254,6 +258,7 @@ TRANSLATIONS = {
         "split.invalid_input": "入力が無効です",
         "split.failed": "分割に失敗しました",
         "split.success": "PDF を {count} 個のファイルに分割しました。",
+        "split.page_count": "ページ数：{count}",
 
         "delete.title": "ページを削除",
         "delete.choose_pdf": "PDF を選択",
@@ -279,6 +284,7 @@ TRANSLATIONS = {
         "delete.invalid_input": "入力が無効です",
         "delete.failed": "削除に失敗しました",
         "delete.success": "ページを正常に削除しました。",
+        "delete.page_count": "ページ数：{count}",
 
         "history.title": "操作履歴",
         "navigation.history": "操作履歴",
