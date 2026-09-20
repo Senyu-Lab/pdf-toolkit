@@ -111,7 +111,9 @@ class PdfPreviewWidget(QWidget):
             self.file_path = None
             self.page_label.clear()
             self.page_indicator.clear()
-            self.file_label.clear()
+            self.file_label.setText(
+                self.language.get("load_failed")
+            )
             self._update_navigation()
             return
 

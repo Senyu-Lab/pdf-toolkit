@@ -163,3 +163,16 @@ def test_close_document(qtbot, sample_pdf):
     assert widget.file_path is None
     assert widget.current_page == 0
     assert widget.zoom_factor == 1.0
+
+def test_invalid_pdf_shows_load_failed(qtbot, tmp_path):
+    invalid_pdf = tmp_path / "invalid.pdf"
+    invalid_pdf.write_text("This is not a PDF.")
+
+    widget = PdfPreviewWidget()
+    qtbot.addWidget(widget)
+
+    widget.load_pdf(invalid_pdf)
+
+    assert widget.document is None
+    assert widget.file_path is None
+    assert widget.file_label.text() == "Unable to open PDF file."

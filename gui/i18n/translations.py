@@ -104,6 +104,7 @@ TRANSLATIONS = {
         "preview.zoom_in": "Zoom In",
         "preview.fit": "Fit",
         "preview.no_file": "No PDF selected",
+        "load_failed": "Unable to open PDF file.",
 
         "common.not_selected": "Not selected",
         "common.warning": "Warning",
@@ -205,6 +206,7 @@ TRANSLATIONS = {
         "preview.zoom_in": "放大",
         "preview.fit": "适应窗口",
         "preview.no_file": "未选择 PDF",
+        "load_failed": "无法打开 PDF 文件。",
 
         "common.not_selected": "未选择",
         "common.warning": "警告",
@@ -312,6 +314,7 @@ TRANSLATIONS = {
         "preview.zoom_in": "拡大",
         "preview.fit": "ウィンドウに合わせる",
         "preview.no_file": "PDF が選択されていません",
+        "load_failed": "PDF ファイルを開けません。",
 
         "common.not_selected": "未選択",
         "common.warning": "警告",
