@@ -176,3 +176,19 @@ def test_invalid_pdf_shows_load_failed(qtbot, tmp_path):
     assert widget.document is None
     assert widget.file_path is None
     assert widget.file_label.text() == "Unable to open PDF file."
+
+def test_page_indicator_shows_current_page(qtbot, sample_pdf):
+    widget = PdfPreviewWidget()
+    qtbot.addWidget(widget)
+
+    widget.load_pdf(sample_pdf)
+
+    assert widget.page_indicator.text() == "1 / 3"
+
+    widget.next_page()
+
+    assert widget.page_indicator.text() == "2 / 3"
+
+    widget.next_page()
+
+    assert widget.page_indicator.text() == "3 / 3"
