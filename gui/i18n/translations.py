@@ -97,6 +97,19 @@ TRANSLATIONS = {
         "history.details_title": "Operation Details",
         "history.error": "Error",
 
+        "navigation.agent": "AI Assistant",
+
+        "agent.title": "AI Assistant",
+        "agent.send": "Send",
+        "agent.user": "You",
+        "agent.assistant": "AI Assistant",
+        "agent.conversation_placeholder": (
+            "Your conversation will appear here."
+        ),
+        "agent.input_placeholder": (
+            "Ask a question about your PDF..."
+        ),
+
         "preview.title": "PDF Preview",
         "preview.previous": "Previous",
         "preview.next": "Next",
@@ -198,6 +211,19 @@ TRANSLATIONS = {
 
         "history.details_title": "操作详情",
         "history.error": "错误信息",
+
+        "navigation.agent": "AI 助手",
+
+        "agent.title": "AI 助手",
+        "agent.send": "发送",
+        "agent.user": "你",
+        "agent.assistant": "AI 助手",
+        "agent.conversation_placeholder": (
+            "对话内容将在此处显示。"
+        ),
+        "agent.input_placeholder": (
+            "请输入关于 PDF 的问题……"
+        ),
 
         "preview.title": "PDF 预览",
         "preview.previous": "上一页",
@@ -306,6 +332,19 @@ TRANSLATIONS = {
 
         "history.details_title": "操作詳細",
         "history.error": "エラー",
+
+        "navigation.agent": "AI アシスタント",
+
+        "agent.title": "AI アシスタント",
+        "agent.send": "送信",
+        "agent.user": "あなた",
+        "agent.assistant": "AI アシスタント",
+        "agent.conversation_placeholder": (
+            "会話内容がここに表示されます。"
+        ),
+        "agent.input_placeholder": (
+            "PDF について質問してください……"
+        ),
 
         "preview.title": "PDF プレビュー",
         "preview.previous": "前のページ",

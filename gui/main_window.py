@@ -1,3 +1,4 @@
+
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QApplication,
@@ -14,6 +15,7 @@ from PySide6.QtWidgets import (
 
 from app.database.database import Database
 from app.database.repository import HistoryRepository
+from gui.agent_chat_widget import AgentChatWidget
 from gui.delete_widget import DeleteWidget
 from gui.history_widget import HistoryWidget
 from gui.i18n import LanguageManager
@@ -63,11 +65,13 @@ class MainWindow(QMainWindow):
         self.split_button = QPushButton()
         self.delete_button = QPushButton()
         self.history_button = QPushButton()
+        self.agent_button = QPushButton()
 
         navigation_layout.addWidget(self.merge_button)
         navigation_layout.addWidget(self.split_button)
         navigation_layout.addWidget(self.delete_button)
         navigation_layout.addWidget(self.history_button)
+        navigation_layout.addWidget(self.agent_button)
         navigation_layout.addStretch()
 
         self.pages = QStackedWidget()
@@ -97,10 +101,13 @@ class MainWindow(QMainWindow):
             self.history_repository,
         )
 
+        self.agent_chat_widget = AgentChatWidget(self.language)
+
         self.pages.addWidget(self.merge_widget)
         self.pages.addWidget(self.split_widget)
         self.pages.addWidget(self.delete_widget)
         self.pages.addWidget(self.history_widget)
+        self.pages.addWidget(self.agent_chat_widget)
 
         self.preview_widget = PdfPreviewWidget(
             self.language,
@@ -189,6 +196,10 @@ class MainWindow(QMainWindow):
             self.show_history_page
         )
 
+        self.agent_button.clicked.connect(
+            self.show_agent_chat_page
+        )
+
         self.refresh_ui()
         self.show_merge_page()
 
@@ -214,7 +225,6 @@ class MainWindow(QMainWindow):
         self,
         language: str | None = None,
     ):
-
         self.setWindowTitle(
             self.language.get("app.title")
         )
@@ -235,11 +245,16 @@ class MainWindow(QMainWindow):
             self.language.get("navigation.history")
         )
 
+        self.agent_button.setText(
+            self.language.get("navigation.agent")
+        )
+
         # Refresh the individual pages.
         self.merge_widget.refresh_ui()
         self.split_widget.refresh_ui()
         self.delete_widget.refresh_ui()
         self.history_widget.refresh_ui()
+        self.agent_chat_widget.refresh_ui()
         self.preview_widget.refresh_ui()
 
     def show_merge_page(self):
@@ -260,6 +275,11 @@ class MainWindow(QMainWindow):
     def show_history_page(self):
         self.pages.setCurrentWidget(
             self.history_widget
+        )
+
+    def show_agent_chat_page(self):
+        self.pages.setCurrentWidget(
+            self.agent_chat_widget
         )
 
     def restore_window_state(self):

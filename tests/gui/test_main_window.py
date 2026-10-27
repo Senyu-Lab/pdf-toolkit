@@ -125,3 +125,21 @@ def test_history_refreshes_when_page_is_selected(
     )
 
     assert refresh_called
+
+def test_agent_chat_page_is_available(qtbot):
+    window = MainWindow()
+    qtbot.addWidget(window)
+
+    assert window.pages.indexOf(
+        window.agent_chat_widget
+    ) >= 0
+
+    assert window.agent_button is not None
+
+def test_click_agent_button_shows_agent_chat_page(qtbot):
+    window = MainWindow()
+    qtbot.addWidget(window)
+
+    window.agent_button.click()
+
+    assert window.pages.currentWidget() == window.agent_chat_widget
