@@ -343,6 +343,17 @@ class MainWindow(QMainWindow):
             self.history_widget.refresh_history()
 
 
+'''def main():
+    app = QApplication([])
+
+    llm = GroqLLMClient()
+    agent_service = AgentService(llm=llm)
+
+    window = MainWindow(agent_service=agent_service)
+    window.show()
+
+    app.exec()'''
+
 def main():
     app = QApplication([])
     window = MainWindow()
