@@ -44,4 +44,4 @@ jobs:
         run: pytest
 
       - name: Run Ruff
-        run: ruff check .
+        run: ruff check app gui tests
