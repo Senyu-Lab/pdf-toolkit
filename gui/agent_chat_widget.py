@@ -1,9 +1,10 @@
 
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QPushButton,
+    QScrollArea,
     QTextEdit,
     QVBoxLayout,
     QWidget,
@@ -24,8 +25,21 @@ class AgentChatWidget(QWidget):
 
         self.title_label = QLabel()
 
-        self.message_view = QTextEdit()
-        self.message_view.setReadOnly(True)
+        self.message_scroll_area = QScrollArea()
+        self.message_scroll_area.setWidgetResizable(True)
+
+        self.message_container = QWidget()
+        self.message_layout = QVBoxLayout(self.message_container)
+        self.message_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.message_layout.setSpacing(12)
+
+        self.empty_state_label = QLabel()
+        self.empty_state_label.setAlignment(
+            Qt.AlignmentFlag.AlignCenter
+        )
+        self.message_layout.addWidget(self.empty_state_label)
+
+        self.message_scroll_area.setWidget(self.message_container)
 
         self.input_edit = QTextEdit()
         self.input_edit.setMaximumHeight(120)
@@ -40,7 +54,7 @@ class AgentChatWidget(QWidget):
 
         layout = QVBoxLayout(self)
         layout.addWidget(self.title_label)
-        layout.addWidget(self.message_view)
+        layout.addWidget(self.message_scroll_area)
         layout.addLayout(input_layout)
 
         # Apply the initial language after all widgets are created.
@@ -54,7 +68,7 @@ class AgentChatWidget(QWidget):
         self.send_button.setText(
             self.language.get("agent.send")
         )
-        self.message_view.setPlaceholderText(
+        self.empty_state_label.setText(
             self.language.get("agent.conversation_placeholder")
         )
         self.input_edit.setPlaceholderText(
@@ -63,13 +77,52 @@ class AgentChatWidget(QWidget):
 
     def add_message(self, role: str, message: str):
         if role == "user":
-            speaker = self.language.get("agent.user")
+            bubble_name = "userMessageBubble"
+            bubble_color = "#D9FDD3"
+            alignment = Qt.AlignmentFlag.AlignRight
         elif role == "assistant":
-            speaker = self.language.get("agent.assistant")
+            bubble_name = "assistantMessageBubble"
+            bubble_color = "#F1F1F1"
+            alignment = Qt.AlignmentFlag.AlignLeft
         else:
             raise ValueError(f"Unsupported message role: {role}")
 
-        self.message_view.append(f"{speaker}: {message}")
+        self.empty_state_label.hide()
+
+        row = QWidget()
+        row_layout = QHBoxLayout(row)
+        row_layout.setContentsMargins(0, 0, 0, 0)
+
+        bubble = QLabel(message)
+        bubble.setObjectName(bubble_name)
+        bubble.setWordWrap(True)
+        bubble.setTextInteractionFlags(
+            Qt.TextInteractionFlag.TextSelectableByMouse
+        )
+        bubble.setMaximumWidth(500)
+        bubble.setStyleSheet(
+            f"""
+            QLabel {{
+                background-color: {bubble_color};
+                color: #222222;
+                border-radius: 10px;
+                padding: 8px 12px;
+            }}
+            """
+        )
+
+        if role == "user":
+            row_layout.addStretch()
+            row_layout.addWidget(bubble, 0, alignment)
+        else:
+            row_layout.addWidget(bubble, 0, alignment)
+            row_layout.addStretch()
+
+        self.message_layout.addWidget(row)
+
+        self.message_scroll_area.verticalScrollBar().setValue(
+            self.message_scroll_area.verticalScrollBar().maximum()
+        )
 
     def _send_message(self):
         message = self.input_edit.toPlainText().strip()
