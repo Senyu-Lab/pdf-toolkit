@@ -16,6 +16,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Checkout PDF-Agent
+        uses: actions/checkout@v4
+        with:
+          repository: Senyu-Lab/pdf-agent
+          path: pdf-agent
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -30,6 +36,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install -e ./pdf-agent
 
       - name: Run tests
         env:
