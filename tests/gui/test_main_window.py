@@ -1,3 +1,5 @@
+from PySide6.QtWidgets import QLabel
+
 from gui.main_window import MainWindow
 
 
@@ -143,3 +145,162 @@ def test_click_agent_button_shows_agent_chat_page(qtbot):
     window.agent_button.click()
 
     assert window.pages.currentWidget() == window.agent_chat_widget
+
+def test_main_window_tracks_current_pdf_path(
+    qtbot,
+    monkeypatch,
+    tmp_path,
+):
+    window = MainWindow()
+    qtbot.addWidget(window)
+
+    pdf_path = tmp_path / "sample.pdf"
+
+    monkeypatch.setattr(
+        window.preview_widget,
+        "load_pdf",
+        lambda path: None,
+    )
+
+    assert window.current_pdf_path is None
+
+    window.show_pdf_preview(str(pdf_path))
+
+    assert window.current_pdf_path == str(pdf_path)
+
+def test_main_window_clears_current_pdf_path(
+    qtbot,
+    monkeypatch,
+    tmp_path,
+):
+    window = MainWindow()
+    qtbot.addWidget(window)
+
+    pdf_path = tmp_path / "sample.pdf"
+
+    monkeypatch.setattr(
+        window.preview_widget,
+        "load_pdf",
+        lambda path: None,
+    )
+    monkeypatch.setattr(
+        window.preview_widget,
+        "close_document",
+        lambda: None,
+    )
+
+    window.show_pdf_preview(str(pdf_path))
+    assert window.current_pdf_path == str(pdf_path)
+
+    window.show_pdf_preview(None)
+
+    assert window.current_pdf_path is None
+
+def test_main_window_sends_question_to_agent_service(
+    qtbot,
+    monkeypatch,
+    tmp_path,
+):
+    from unittest.mock import Mock
+
+    window = MainWindow()
+    qtbot.addWidget(window)
+
+    pdf_path = tmp_path / "sample.pdf"
+    question = "请总结这份 PDF"
+    answer = "这份 PDF 主要介绍了数据分析方法。"
+
+    service = Mock()
+    service.ask.return_value = answer
+    window.agent_service = service
+
+    monkeypatch.setattr(
+        window.preview_widget,
+        "load_pdf",
+        lambda path: None,
+    )
+
+    window.show_pdf_preview(str(pdf_path))
+
+    window.agent_chat_widget.message_submitted.emit(question)
+
+    service.ask.assert_called_once_with(str(pdf_path), question)
+
+    bubbles = window.agent_chat_widget.findChildren(
+        QLabel,
+        "assistantMessageBubble",
+    )
+    assert any(bubble.text() == answer for bubble in bubbles)
+
+def test_main_window_prompts_when_no_pdf_is_selected(
+    qtbot,
+):
+    from unittest.mock import Mock
+
+    window = MainWindow()
+    qtbot.addWidget(window)
+
+    service = Mock()
+    window.agent_service = service
+
+    window.agent_chat_widget.message_submitted.emit(
+        "请总结这份 PDF"
+    )
+
+    service.ask.assert_not_called()
+
+    bubbles = window.agent_chat_widget.findChildren(
+        QLabel,
+        "assistantMessageBubble",
+    )
+
+    assert any(
+        bubble.text() == "Please select a PDF file first."
+        for bubble in bubbles
+    )
+
+def test_main_window_displays_error_when_agent_fails(
+    qtbot,
+    monkeypatch,
+    tmp_path,
+):
+    from unittest.mock import Mock
+
+    window = MainWindow()
+    qtbot.addWidget(window)
+
+    pdf_path = tmp_path / "sample.pdf"
+
+    monkeypatch.setattr(
+        window.preview_widget,
+        "load_pdf",
+        lambda path: None,
+    )
+
+    window.show_pdf_preview(str(pdf_path))
+
+    service = Mock()
+    service.ask.side_effect = RuntimeError(
+        "Agent execution failed"
+    )
+    window.agent_service = service
+
+    window.agent_chat_widget.message_submitted.emit(
+        "请总结这份 PDF"
+    )
+
+    service.ask.assert_called_once_with(
+        str(pdf_path),
+        "请总结这份 PDF",
+    )
+
+    bubbles = window.agent_chat_widget.findChildren(
+        QLabel,
+        "assistantMessageBubble",
+    )
+
+    assert any(
+        bubble.text()
+        == "Sorry, I couldn't process your question."
+        for bubble in bubbles
+    )

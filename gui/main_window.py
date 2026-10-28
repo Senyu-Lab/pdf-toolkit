@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from app.agent.agent_service import AgentService
 from app.database.database import Database
 from app.database.repository import HistoryRepository
 from gui.agent_chat_widget import AgentChatWidget
@@ -39,6 +40,8 @@ class MainWindow(QMainWindow):
 
         self.settings = settings or AppSettings()
 
+        self.current_pdf_path = None
+
         self.database = Database()
         self.history_repository = HistoryRepository(
             self.database,
@@ -53,6 +56,12 @@ class MainWindow(QMainWindow):
         )
 
         self.setup_ui()
+
+        self.agent_service = AgentService()
+        self.agent_chat_widget.message_submitted.connect(
+            self.handle_agent_message
+        )
+
         self.restore_window_state()
 
     def setup_ui(self):
@@ -204,6 +213,10 @@ class MainWindow(QMainWindow):
         self.show_merge_page()
 
     def show_pdf_preview(self, path):
+        self.current_pdf_path = (
+            str(path) if path is not None else None
+        )
+
         if path is None:
             self.preview_widget.close_document()
             self.preview_widget.hide()
@@ -281,6 +294,29 @@ class MainWindow(QMainWindow):
         self.pages.setCurrentWidget(
             self.agent_chat_widget
         )
+
+    def handle_agent_message(self, question: str):
+        if self.current_pdf_path is None:
+            self.agent_chat_widget.add_message(
+                "assistant",
+                "Please select a PDF file first.",
+            )
+            return
+
+        try:
+            answer = self.agent_service.ask(
+                self.current_pdf_path,
+                question,
+            )
+            self.agent_chat_widget.add_message(
+                "assistant",
+                answer,
+            )
+        except Exception:
+            self.agent_chat_widget.add_message(
+                "assistant",
+                "Sorry, I couldn't process your question.",
+            )
 
     def restore_window_state(self):
         geometry = self.settings.get_window_geometry()
