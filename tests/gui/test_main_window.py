@@ -304,3 +304,19 @@ def test_main_window_displays_error_when_agent_fails(
         == "Sorry, I couldn't process your question."
         for bubble in bubbles
     )
+
+def test_main_window_accepts_injected_agent_service(
+    qtbot,
+):
+    from unittest.mock import Mock
+
+    from gui.main_window import MainWindow
+
+    agent_service = Mock()
+
+    window = MainWindow(
+        agent_service=agent_service,
+    )
+    qtbot.addWidget(window)
+
+    assert window.agent_service is agent_service

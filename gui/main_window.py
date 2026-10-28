@@ -29,8 +29,9 @@ from gui.styles import APP_STYLE
 
 class MainWindow(QMainWindow):
     def __init__(
-        self,
-        settings: AppSettings | None = None,
+            self,
+            settings: AppSettings | None = None,
+            agent_service: AgentService | None = None,
     ):
         super().__init__()
 
@@ -57,7 +58,11 @@ class MainWindow(QMainWindow):
 
         self.setup_ui()
 
-        self.agent_service = AgentService()
+        self.agent_service = (
+            agent_service
+            if agent_service is not None
+            else AgentService()
+        )
         self.agent_chat_widget.message_submitted.connect(
             self.handle_agent_message
         )
